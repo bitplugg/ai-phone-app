@@ -16,12 +16,15 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-        
+        with:
+          path: ai-phone-app
+          
       - name: Set up JDK
         uses: actions/setup-java@v4
         with:
           java-version: '21'
           distribution: 'temurin'
+          path: ai-phone-app
           
       - name: Cache Gradle
         uses: actions/cache@v4
@@ -29,15 +32,14 @@ jobs:
           path: |
             ~/.gradle/caches
             ~/.gradle/wrapper
-          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+          key: ${{ runner.os }}-gradle-${{ hashFiles('ai-phone-app/**/*.gradle*', 'ai-phone-app/gradle/wrapper/gradle-wrapper.properties') }}
           restore-keys: |
             ${{ runner.os }}-gradle-
             
       - name: Build Debug APK
         run: |
           cd ai-phone-app
-          chmod +x ../build.sh
-          ../build.sh 1
+          ./gradlew assembleDebug --no-daemon
           
       - name: Upload APK
         uses: actions/upload-artifact@v4
@@ -48,45 +50,36 @@ jobs:
       - name: Generate Changelog
         id: changelog
         run: |
-          CHANGELOG=$(git log --pretty=format:"- %s (%h)" --since="2024-01-01" | head -20)
+          cd ai-phone-app
+          CHANGELOG=$(git log --pretty=format:"- %s (%h)" -n 20)
           echo "CHANGELOG<<EOF" >> $GITHUB_OUTPUT
           echo "$CHANGELOG" >> $GITHUB_OUTPUT
           echo "EOF" >> $GITHUB_OUTPUT
           
-      - name: Release
+      - name: Create Release
         if: startsWith(github.ref, 'refs/tags/v')
         uses: softprops/action-gh-release@v1
         with:
           files: ai-phone-app/app/build/outputs/apk/debug/app-debug.apk
-          body_path: .github/RELEASE_NOTES.txt
-          generate_release_notes: true
+          body: |
+            ## Changelog
+            
+            ${{ steps.changelog.outputs.CHANGELOG }}
+            
+            ## Installation
+            
+            1. Download the APK below
+            2. Install on your Android device
+            3. Enjoy!
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          
-      - name: Create Release Notes
-        if: startsWith(github.ref, 'refs/tags/v')
-        run: |
-          cat > .github/RELEASE_NOTES.txt << 'EOF'
-          ## What's New
-          
-          ${{ steps.changelog.outputs.CHANGELOG }}
-          
-          ## Downloads
-          
-          - app-debug.apk
-          
-          ## Installation
-          
-          1. Download the APK
-          2. Install on your Android device
-          3. Enjoy!
-          EOF
           
       - name: Commit APK
         if: startsWith(github.ref, 'refs/tags/v')
         run: |
+          cd ai-phone-app
           git config --local user.email "github-actions[bot]@users.noreply.github.com"
           git config --local user.name "github-actions[bot]"
-          git add -f ai-phone-app/app/build/outputs/apk/debug/app-debug.apk
+          git add -f app/build/outputs/apk/debug/app-debug.apk
           git commit -m "Add APK for ${{ github.ref_name }}"
           git push
