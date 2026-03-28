@@ -85,6 +85,14 @@ jobs:
           name: app-debug.apk
           path: ai-phone-app/
           
+      - name: Get APK Info
+        id: apk-info
+        run: |
+          APK_SIZE=$(ls -lh ai-phone-app/app-debug.apk | awk '{print $5}')
+          APK_DATE=$(date -u +"%Y-%m-%d %H:%M:%S UTC")
+          echo "SIZE=$APK_SIZE" >> $GITHUB_OUTPUT
+          echo "DATE=$APK_DATE" >> $GITHUB_OUTPUT
+          
       - name: Generate Changelog
         id: changelog
         run: |
@@ -99,14 +107,49 @@ jobs:
         with:
           files: ai-phone-app/app-debug.apk
           body: |
-            ## Changelog
+            ## 🤖 AI Phone App
             
+            ```
+            ╔═══════════════════════════════════════════╗
+            ║     AI Phone Assistant for Android        ║
+            ║     Local AI (Ollama) + Cloud API        ║
+            ╚═══════════════════════════════════════════╝
+            ```
+            
+            ### 📱 Features
+            - 🏠 **Local AI** - Connect to Ollama via WiFi
+            - ☁️ **Cloud AI** - OpenAI & DeepSeek API support
+            - 🎨 **Material You** - Dynamic colors on Android 12+
+            - 🎤 **Voice Input** - Speech-to-text
+            - 🔊 **TTS** - Text-to-speech responses
+            - 💬 **Chat History** - Multiple conversations
+            - 🎨 **Themes** - Purple, Blue, Green, Orange, Red
+            - 📤 **Export** - Backup chats & settings
+            
+            ### 📦 Release Info
+            | | |
+            |---|---|
+            | **Version** | ${{ github.ref_name }} |
+            | **Size** | ${{ steps.apk-info.outputs.SIZE }} |
+            | **Date** | ${{ steps.apk-info.outputs.DATE }} |
+            | **Commit** | ${{ github.sha }} |
+            
+            ### 📋 Changelog
             ${{ steps.changelog.outputs.CHANGELOG }}
             
-            ## Installation
+            ---
             
-            1. Download the APK below
-            2. Install on your Android device
-            3. Enjoy!
+            ### 💾 Installation
+            
+            ```bash
+            # Download APK below and install
+            adb install app-debug.apk
+            ```
+            
+            > ⚠️ Enable "Install from unknown sources" in Android settings
+            
+            ---
+            
+            Built with ❤️ | [Source Code](https://github.com/bitplugg/ai-phone-app)
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
