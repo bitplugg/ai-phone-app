@@ -35,9 +35,9 @@ show_menu() {
     echo -e "  ${WHITE}4)${NC} 📱 Lint Check"
     echo ""
     echo -e "${MAGENTA}─── GitHub ───${NC}"
-    echo -e "  ${WHITE}5)${NC} 🐙 Push"
-    echo -e "  ${WHITE}6)${NC} 🏷️ Tag"
-    echo -e "  ${WHITE}7)${NC} 📤 Release"
+    echo -e "  ${WHITE}5)${NC} 🐙 Push (без релиза)"
+    echo -e "  ${WHITE}6)${NC} 🌙 Nightly Build (master)"
+    echo -e "  ${WHITE}7)${NC} ⭐ Release Build (тег)"
     echo ""
     echo -e "  ${WHITE}0)${NC} ❌ ${GRAY}Выход${NC}"
     echo ""
@@ -87,15 +87,36 @@ while true; do
             ;;
         6)
             echo ""
-            echo -en "${CYAN}Версия (v1.0.0):${NC} "
-            read version
-            [[ "$version" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]] && git tag "$version" && git push origin "$version" && echo -e "${GREEN}✓ Тэг $version!${NC}" || echo -e "${RED}Формат: v1.0.0${NC}"
+            echo -e "${YELLOW}🌙 Nightly Build${NC}"
+            echo ""
+            BRANCH=$(git rev-parse --abbrev-ref HEAD 2>/dev/null)
+            echo -e "${CYAN}Ветка:${NC} $BRANCH"
+            echo -e "${MAGENTA}Создаст Pre-release на master${NC}"
+            echo ""
+            echo -en "${CYAN}Коммит:${NC} "
+            read msg
+            [ -n "$(git status --porcelain)" ] && git add -A && git commit -m "${msg:-Nightly build}"
+            git push origin "$BRANCH" 2>/dev/null || echo -e "${RED}Нет remote${NC}"
+            echo -e "${GREEN}✓ Готово! Создаст nightly релиз...${NC}"
             ;;
         7)
             echo ""
+            echo -e "${YELLOW}⭐ Release Build${NC}"
+            echo ""
             echo -en "${CYAN}Версия (v1.0.0):${NC} "
             read version
-            [[ "$version" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]] && git tag "$version" && git push origin "$version" && echo -e "${GREEN}✓ GitHub Actions создаст релиз${NC}" || echo -e "${RED}Формат: v1.0.0${NC}"
+            if [[ "$version" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+                echo ""
+                echo -en "${CYAN}Коммит:${NC} "
+                read msg
+                [ -n "$(git status --porcelain)" ] && git add -A && git commit -m "${msg:-Release $version}"
+                git push origin "$BRANCH" 2>/dev/null || true
+                git tag "$version" && git push origin "$version"
+                echo -e "${GREEN}✓ Тэг $version запушен!${NC}"
+                echo -e "${GREEN}✓ Создаст релиз на GitHub...${NC}"
+            else
+                echo -e "${RED}✗ Формат: v1.0.0${NC}"
+            fi
             ;;
         0|q|Q)
             clear
