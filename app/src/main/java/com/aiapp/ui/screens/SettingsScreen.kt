@@ -34,6 +34,10 @@ fun SettingsScreen(
     isConnected: Boolean,
     textSize: Float = 16f,
     ttsEnabled: Boolean = false,
+    themeColor: String = "system",
+    telegramWebhook: String = "",
+    tokenCount: Int = 0,
+    deviceInfo: String = "",
     onDarkThemeChange: (Boolean) -> Unit,
     onUsernameChange: (String) -> Unit,
     onSelectedModelChange: (String) -> Unit,
@@ -45,6 +49,11 @@ fun SettingsScreen(
     onBackClick: () -> Unit,
     onTextSizeChange: (Float) -> Unit = {},
     onTtsEnabledChange: (Boolean) -> Unit = {},
+    onThemeColorChange: (String) -> Unit = {},
+    onBackupSettings: () -> Unit = {},
+    onClearCache: () -> Unit = {},
+    onResetTokenCount: () -> Unit = {},
+    onTelegramWebhookChange: (String) -> Unit = {},
     onExportAllChats: () -> Unit = {},
     onCopyAllMessages: () -> Unit = {},
     onClearAllChats: () -> Unit = {},
@@ -56,6 +65,9 @@ fun SettingsScreen(
     var showApiKeyDialog by remember { mutableStateOf(false) }
     var tempServerUrl by remember { mutableStateOf(serverUrl) }
     var tempApiKey by remember { mutableStateOf(apiKey) }
+    var showTelegramDialog by remember { mutableStateOf(false) }
+    var showDeviceInfoDialog by remember { mutableStateOf(false) }
+    var tempTelegramWebhook by remember { mutableStateOf(telegramWebhook) }
     val context = LocalContext.current
 
     Scaffold(
@@ -139,7 +151,7 @@ fun SettingsScreen(
                         
                         OutlinedButton(
                             onClick = {
-                                val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://github.com/bitplugg/ai-app"))
+                                val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://github.com/bitplugg/ai-phone-app/releases"))
                                 context.startActivity(intent)
                             },
                             colors = ButtonDefaults.outlinedButtonColors(contentColor = Color.White)
@@ -396,6 +408,118 @@ fun SettingsScreen(
                     }
                 )
             }
+
+            // Theme Color Selection
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 8.dp)
+            ) {
+                Column(modifier = Modifier.padding(16.dp)) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(Icons.Default.Palette, contentDescription = null)
+                        Spacer(modifier = Modifier.width(16.dp))
+                        Text("Цвет темы")
+                    }
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(4.dp)
+                    ) {
+                        listOf(
+                            "system" to "Системный",
+                            "purple" to "Фиолетовый",
+                            "blue" to "Синий",
+                            "green" to "Зелёный",
+                            "orange" to "Оранжевый",
+                            "red" to "Красный"
+                        ).forEach { (color, name) ->
+                            FilterChip(
+                                selected = themeColor == color,
+                                onClick = { onThemeColorChange(color) },
+                                label = { Text(name, style = MaterialTheme.typography.labelSmall) }
+                            )
+                        }
+                    }
+                }
+            }
+
+            // Telegram Webhook
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 8.dp),
+                onClick = { showTelegramDialog = true }
+            ) {
+                ListItem(
+                    headlineContent = { Text("Telegram уведомления") },
+                    supportingContent = { 
+                        Text(if (telegramWebhook.isNotBlank()) "Настроены" else "Не настроены") 
+                    },
+                    leadingContent = { Icon(Icons.Default.Send, contentDescription = null) },
+                    trailingContent = { Icon(Icons.Default.Edit, contentDescription = null) }
+                )
+            }
+
+            // Device Info
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 8.dp),
+                onClick = { showDeviceInfoDialog = true }
+            ) {
+                ListItem(
+                    headlineContent = { Text("Информация об устройстве") },
+                    supportingContent = { Text("Нажмите для подробностей") },
+                    leadingContent = { Icon(Icons.Default.PhoneAndroid, contentDescription = null) }
+                )
+            }
+
+            // Token Counter
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 8.dp)
+            ) {
+                ListItem(
+                    headlineContent = { Text("Использовано токенов") },
+                    supportingContent = { Text("$tokenCount токенов") },
+                    leadingContent = { Icon(Icons.Default.Token, contentDescription = null) },
+                    trailingContent = {
+                        TextButton(onClick = onResetTokenCount) {
+                            Text("Сбросить")
+                        }
+                    }
+                )
+            }
+
+            // Backup
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 8.dp),
+                onClick = onBackupSettings
+            ) {
+                ListItem(
+                    headlineContent = { Text("Backup настроек") },
+                    supportingContent = { Text("Сохранить настройки") },
+                    leadingContent = { Icon(Icons.Default.Backup, contentDescription = null) }
+                )
+            }
+
+            // Clear Cache
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 8.dp),
+                onClick = onClearCache
+            ) {
+                ListItem(
+                    headlineContent = { Text("Очистить кэш") },
+                    supportingContent = { Text("Очистить временные данные") },
+                    leadingContent = { Icon(Icons.Default.CleaningServices, contentDescription = null) }
+                )
+            }
         }
     }
 
@@ -476,6 +600,49 @@ fun SettingsScreen(
             },
             dismissButton = {
                 TextButton(onClick = { showApiKeyDialog = false }) { Text("Отмена") }
+            }
+        )
+    }
+
+    // Telegram Webhook Dialog
+    if (showTelegramDialog) {
+        AlertDialog(
+            onDismissRequest = { showTelegramDialog = false },
+            title = { Text("Telegram Webhook") },
+            text = {
+                Column {
+                    Text("Введите токен бота", style = MaterialTheme.typography.bodySmall)
+                    Spacer(modifier = Modifier.height(8.dp))
+                    OutlinedTextField(
+                        value = tempTelegramWebhook,
+                        onValueChange = { tempTelegramWebhook = it },
+                        label = { Text("Bot Token (123456:ABC-DEF...)") },
+                        singleLine = true
+                    )
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = {
+                    onTelegramWebhookChange(tempTelegramWebhook)
+                    showTelegramDialog = false
+                }) { Text("Сохранить") }
+            },
+            dismissButton = {
+                TextButton(onClick = { showTelegramDialog = false }) { Text("Отмена") }
+            }
+        )
+    }
+
+    // Device Info Dialog
+    if (showDeviceInfoDialog) {
+        AlertDialog(
+            onDismissRequest = { showDeviceInfoDialog = false },
+            title = { Text("Информация об устройстве") },
+            text = {
+                Text(deviceInfo, style = MaterialTheme.typography.bodyMedium)
+            },
+            confirmButton = {
+                TextButton(onClick = { showDeviceInfoDialog = false }) { Text("OK") }
             }
         )
     }

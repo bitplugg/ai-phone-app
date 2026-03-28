@@ -21,6 +21,9 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
     val autoSendVoice = preferencesManager.autoSendVoice.stateIn(viewModelScope, SharingStarted.Eagerly, false)
     val textSize = preferencesManager.textSize.stateIn(viewModelScope, SharingStarted.Eagerly, 16f)
     val ttsEnabled = preferencesManager.ttsEnabled.stateIn(viewModelScope, SharingStarted.Eagerly, false)
+    val themeColor = preferencesManager.themeColor.stateIn(viewModelScope, SharingStarted.Eagerly, "system")
+    val telegramWebhook = preferencesManager.telegramWebhook.stateIn(viewModelScope, SharingStarted.Eagerly, "")
+    val tokenCount = preferencesManager.tokenCount.stateIn(viewModelScope, SharingStarted.Eagerly, 0)
 
     private val _selectedModel = MutableStateFlow("llama3")
     val selectedModel: StateFlow<String> = _selectedModel.asStateFlow()
@@ -203,5 +206,46 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
             checkConnection()
             _isRefreshing.value = false
         }
+    }
+
+    fun setThemeColor(color: String) {
+        viewModelScope.launch { preferencesManager.setThemeColor(color) }
+    }
+
+    fun setTelegramWebhook(webhook: String) {
+        viewModelScope.launch { preferencesManager.setTelegramWebhook(webhook) }
+    }
+
+    fun sendTelegramNotification(text: String) {
+        viewModelScope.launch {
+            val webhook = telegramWebhook.value
+            if (webhook.isNotBlank()) {
+                try {
+                    val url = if (webhook.startsWith("http")) webhook else "https://api.telegram.org/bot$webhook/sendMessage"
+                    okhttp3.Request.Builder()
+                        .url("$webhook/sendMessage?text=${java.net.URLEncoder.encode(text, "UTF-8")}")
+                        .post(okhttp3.RequestBody.create(null, ByteArray(0)))
+                        .build()
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                }
+            }
+        }
+    }
+
+    fun clearCache() {
+        viewModelScope.launch { preferencesManager.clearCache() }
+    }
+
+    fun getDeviceInfoString(): String = preferencesManager.getDeviceInfo()
+
+    suspend fun exportSettings(): String = preferencesManager.exportSettings()
+
+    suspend fun importSettings(json: String) {
+        preferencesManager.importSettings(json)
+    }
+
+    fun resetTokenCount() {
+        viewModelScope.launch { preferencesManager.resetTokenCount() }
     }
 }
