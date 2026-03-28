@@ -24,6 +24,12 @@ enum class CloudProvider {
     DEEPSEEK
 }
 
+data class AIResponse(
+    val text: String,
+    val promptTokens: Int = 0,
+    val completionTokens: Int = 0
+)
+
 class AIService {
     private val ollamaService = OllamaService()
     private val client = OkHttpClient.Builder()
@@ -132,11 +138,18 @@ class AIService {
         )
     }
 
-    fun generate(prompt: String): Flow<String> = flow {
+    fun generate(prompt: String): Flow<AIResponse> = flow {
         when (currentMode) {
             AIMode.OLLAMA -> {
                 val model = "llama3"
-                ollamaService.generate(model, prompt).collect { emit(it) }
+                val fullText = StringBuilder()
+                ollamaService.generate(model, prompt).collect { 
+                    fullText.append(it)
+                    emit(AIResponse(it, 0, 0))
+                }
+                val promptTokens = estimateTokens(prompt)
+                val completionTokens = estimateTokens(fullText.toString())
+                emit(AIResponse(fullText.toString(), promptTokens, completionTokens))
             }
             AIMode.CLOUD -> {
                 generateCloud(prompt, "https://api.openai.com/v1/chat/completions").collect { emit(it) }
@@ -147,7 +160,11 @@ class AIService {
         }
     }.flowOn(Dispatchers.IO)
 
-    private fun generateCloud(prompt: String, apiUrl: String): Flow<String> = flow {
+    private fun estimateTokens(text: String): Int {
+        return (text.length / 4) + 1
+    }
+
+    private fun generateCloud(prompt: String, apiUrl: String): Flow<AIResponse> = flow {
         try {
             val requestBody = mapOf(
                 "model" to cloudModel,
@@ -169,20 +186,24 @@ class AIService {
                     val responseBody = response.body?.string() ?: ""
                     val jsonResponse = gson.fromJson(responseBody, JsonObject::class.java)
                     
+                    val usage = jsonResponse.getAsJsonObject("usage")
+                    val promptTokens = usage?.get("prompt_tokens")?.asInt ?: estimateTokens(prompt)
+                    val completionTokens = usage?.get("completion_tokens")?.asInt ?: 0
+                    
                     val choices = jsonResponse.getAsJsonArray("choices")
                     if (choices != null && choices.size() > 0) {
                         val message = choices[0].asJsonObject.getAsJsonObject("message")
                         val content = message?.get("content")?.asString ?: ""
-                        emit(content)
+                        emit(AIResponse(content, promptTokens, completionTokens))
                     } else {
-                        emit("Ошибка: нет ответа от API")
+                        emit(AIResponse("Ошибка: нет ответа от API", promptTokens, 0))
                     }
                 } else {
-                    emit("Ошибка API: ${response.code}\nПроверьте API ключ")
+                    emit(AIResponse("Ошибка API: ${response.code}\nПроверьте API ключ", 0, 0))
                 }
             }
         } catch (e: Exception) {
-            emit("Ошибка: ${e.message}\nПроверте интернет и API ключ")
+            emit(AIResponse("Ошибка: ${e.message}\nПроверте интернет и API ключ", 0, 0))
         }
     }
 

@@ -8,6 +8,7 @@ import com.aiapp.data.ai.AIService
 import com.aiapp.data.ai.ModelInfo
 import com.aiapp.data.local.InMemoryStorage
 import com.aiapp.data.local.PreferencesManager
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 
@@ -42,6 +43,7 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
 
     val allChats = storage.chats.stateIn(viewModelScope, SharingStarted.Lazily, emptyList())
 
+    @OptIn(ExperimentalCoroutinesApi::class)
     val currentMessages = _currentChatId.flatMapLatest { chatId ->
         if (chatId != null) storage.getChatMessages(chatId) else flowOf(emptyList())
     }.stateIn(viewModelScope, SharingStarted.Lazily, emptyList())
@@ -127,8 +129,10 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
             
             try {
                 var fullResponse = ""
-                aiService.generate(text).collect { part ->
-                    fullResponse += part
+                var totalTokens = 0
+                aiService.generate(text).collect { response ->
+                    fullResponse = response.text
+                    totalTokens = response.promptTokens + response.completionTokens
                 }
                 
                 if (fullResponse.isBlank()) {
@@ -140,6 +144,14 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
                 }
                 
                 storage.addMessage(chatId, fullResponse, false)
+                
+                if (totalTokens > 0) {
+                    preferencesManager.addTokenCount(totalTokens)
+                }
+                
+                if (telegramWebhook.value.isNotBlank()) {
+                    sendTelegramNotification(fullResponse.take(100))
+                }
             } catch (e: Exception) {
                 storage.addMessage(chatId, "Ошибка: ${e.message}", false)
             } finally {
@@ -221,11 +233,14 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
             val webhook = telegramWebhook.value
             if (webhook.isNotBlank()) {
                 try {
-                    val url = if (webhook.startsWith("http")) webhook else "https://api.telegram.org/bot$webhook/sendMessage"
-                    okhttp3.Request.Builder()
-                        .url("$webhook/sendMessage?text=${java.net.URLEncoder.encode(text, "UTF-8")}")
-                        .post(okhttp3.RequestBody.create(null, ByteArray(0)))
+                    val client = okhttp3.OkHttpClient()
+                    val encodedText = java.net.URLEncoder.encode(text, "UTF-8")
+                    val url = "https://api.telegram.org/bot$webhook/sendMessage?text=$encodedText"
+                    val request = okhttp3.Request.Builder()
+                        .url(url)
+                        .get()
                         .build()
+                    client.newCall(request).execute()
                 } catch (e: Exception) {
                     e.printStackTrace()
                 }

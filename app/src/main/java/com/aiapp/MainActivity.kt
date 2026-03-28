@@ -48,6 +48,9 @@ class MainActivity : ComponentActivity() {
             val downloadedModels by viewModel.availableModels.collectAsState()
             val textSize by viewModel.textSize.collectAsState()
             val ttsEnabled by viewModel.ttsEnabled.collectAsState()
+            val themeColor by viewModel.themeColor.collectAsState()
+            val telegramWebhook by viewModel.telegramWebhook.collectAsState()
+            val tokenCount by viewModel.tokenCount.collectAsState()
 
             var currentScreen by remember { mutableStateOf(Screen.CHAT_LIST) }
 
@@ -71,7 +74,7 @@ class MainActivity : ComponentActivity() {
                 }
             }
 
-            AIAppTheme(darkTheme = darkTheme) {
+            AIAppTheme(darkTheme = darkTheme, themeColor = themeColor) {
                 MainScreen(
                     currentScreen = currentScreen,
                     chats = chats,
@@ -129,7 +132,25 @@ class MainActivity : ComponentActivity() {
                         clipboard.setPrimaryClip(clip)
                     },
                     onClearAllChats = { viewModel.clearAllChats() },
-                    onRefresh = { viewModel.refresh() }
+                    onRefresh = { viewModel.refresh() },
+                    onThemeColorChange = { viewModel.setThemeColor(it) },
+                    onTelegramWebhookChange = { viewModel.setTelegramWebhook(it) },
+                    onBackupSettings = {
+                        val content = kotlinx.coroutines.runBlocking { viewModel.exportSettings() }
+                        val file = File(getExternalFilesDir(null), "ai_settings_backup_${System.currentTimeMillis()}.json")
+                        file.writeText(content)
+                        val shareIntent = Intent(Intent.ACTION_SEND).apply {
+                            type = "application/json"
+                            putExtra(Intent.EXTRA_STREAM, android.net.Uri.fromFile(file))
+                        }
+                        startActivity(Intent.createChooser(shareIntent, "Backup настроек"))
+                    },
+                    onClearCache = { viewModel.clearCache() },
+                    onResetTokenCount = { viewModel.resetTokenCount() },
+                    themeColor = themeColor,
+                    telegramWebhook = telegramWebhook,
+                    tokenCount = tokenCount,
+                    deviceInfo = viewModel.getDeviceInfoString()
                 )
             }
         }
