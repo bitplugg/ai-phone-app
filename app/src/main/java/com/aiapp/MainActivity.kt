@@ -51,6 +51,47 @@ class MainActivity : ComponentActivity() {
             val themeColor by viewModel.themeColor.collectAsState()
             val telegramWebhook by viewModel.telegramWebhook.collectAsState()
             val tokenCount by viewModel.tokenCount.collectAsState()
+            val appLanguage by viewModel.appLanguage.collectAsState()
+            val notificationsEnabled by viewModel.notificationsEnabled.collectAsState()
+            val messageNotifications by viewModel.messageNotifications.collectAsState()
+            val showTypingIndicator by viewModel.showTypingIndicator.collectAsState()
+            val autoScroll by viewModel.autoScroll.collectAsState()
+            val soundEnabled by viewModel.soundEnabled.collectAsState()
+            val vibrationEnabled by viewModel.vibrationEnabled.collectAsState()
+            val showTimestamps by viewModel.showTimestamps.collectAsState()
+            val aiTemperature by viewModel.aiTemperature.collectAsState()
+            val maxTokens by viewModel.maxTokens.collectAsState()
+            val streamingResponse by viewModel.streamingResponse.collectAsState()
+            val appLockPin by viewModel.appLockPin.collectAsState()
+            val appLockEnabled by viewModel.appLockEnabled.collectAsState()
+            val chatBackground by viewModel.chatBackground.collectAsState()
+            val quickReplies by viewModel.quickReplies.collectAsState()
+            val autoDeleteDays by viewModel.autoDeleteDays.collectAsState()
+            val markdownEnabled by viewModel.markdownEnabled.collectAsState()
+            val codeHighlight by viewModel.codeHighlight.collectAsState()
+            val nightModeStart by viewModel.nightModeStart.collectAsState()
+            val nightModeEnd by viewModel.nightModeEnd.collectAsState()
+            val nightModeAuto by viewModel.nightModeAuto.collectAsState()
+            val widgetEnabled by viewModel.widgetEnabled.collectAsState()
+            val encryptEnabled by viewModel.encryptEnabled.collectAsState()
+            val voiceReply by viewModel.voiceReply.collectAsState()
+            val autoSpace by viewModel.autoSpace.collectAsState()
+            val doubleSpace by viewModel.doubleSpace.collectAsState()
+            val swipeReply by viewModel.swipeReply.collectAsState()
+            val animationEnabled by viewModel.animationEnabled.collectAsState()
+            val swipeToDelete by viewModel.swipeToDelete.collectAsState()
+            val longPressMenu by viewModel.longPressMenu.collectAsState()
+            val autoSaveDraft by viewModel.autoSaveDraft.collectAsState()
+            val showWordCount by viewModel.showWordCount.collectAsState()
+            val autoExpandUrls by viewModel.autoExpandUrls.collectAsState()
+            val messageBubbleRoundness by viewModel.messageBubbleRoundness.collectAsState()
+            val defaultChatBubbleColor by viewModel.defaultChatBubbleColor.collectAsState()
+            val aiMessageAlignment by viewModel.aiMessageAlignment.collectAsState()
+            val maxMessageLength by viewModel.maxMessageLength.collectAsState()
+            val confirmBeforeSend by viewModel.confirmBeforeSend.collectAsState()
+            val showDeliveryStatus by viewModel.showDeliveryStatus.collectAsState()
+            val quickSendButton by viewModel.quickSendButton.collectAsState()
+            val hideKeyboardOnSend by viewModel.hideKeyboardOnSend.collectAsState()
 
             var currentScreen by remember { mutableStateOf(Screen.CHAT_LIST) }
 
@@ -147,10 +188,93 @@ class MainActivity : ComponentActivity() {
                     },
                     onClearCache = { viewModel.clearCache() },
                     onResetTokenCount = { viewModel.resetTokenCount() },
+                    onLanguageChange = { viewModel.setAppLanguage(it) },
+                    onNotificationsChange = { viewModel.setNotificationsEnabled(it) },
+                    onMessageNotificationsChange = { viewModel.setMessageNotifications(it) },
+                    onTypingIndicatorChange = { viewModel.setShowTypingIndicator(it) },
+                    onAutoScrollChange = { viewModel.setAutoScroll(it) },
+                    onSoundChange = { viewModel.setSoundEnabled(it) },
+                    onVibrationChange = { viewModel.setVibrationEnabled(it) },
+                    onTimestampChange = { viewModel.setShowTimestamps(it) },
+                    onTemperatureChange = { viewModel.setAiTemperature(it) },
+                    onMaxTokensChange = { viewModel.setMaxTokens(it) },
+                    onStreamingChange = { viewModel.setStreamingResponse(it) },
                     themeColor = themeColor,
                     telegramWebhook = telegramWebhook,
                     tokenCount = tokenCount,
-                    deviceInfo = viewModel.getDeviceInfoString()
+                    deviceInfo = viewModel.getDeviceInfoString(),
+                    statistics = viewModel.getStatistics(),
+                    appLanguage = appLanguage,
+                    notificationsEnabled = notificationsEnabled,
+                    messageNotifications = messageNotifications,
+                    showTypingIndicator = showTypingIndicator,
+                    autoScroll = autoScroll,
+                    soundEnabled = soundEnabled,
+                    vibrationEnabled = vibrationEnabled,
+                    showTimestamps = showTimestamps,
+                    aiTemperature = aiTemperature,
+                    maxTokens = maxTokens,
+                    streamingResponse = streamingResponse,
+                    appLockPin = appLockPin,
+                    appLockEnabled = appLockEnabled,
+                    chatBackground = chatBackground,
+                    quickReplies = quickReplies,
+                    autoDeleteDays = autoDeleteDays,
+                    markdownEnabled = markdownEnabled,
+                    codeHighlight = codeHighlight,
+                    nightModeStart = nightModeStart,
+                    nightModeEnd = nightModeEnd,
+                    nightModeAuto = nightModeAuto,
+                    widgetEnabled = widgetEnabled,
+                    encryptEnabled = encryptEnabled,
+                    voiceReply = voiceReply,
+                    autoSpace = autoSpace,
+                    doubleSpace = doubleSpace,
+                    swipeReply = swipeReply,
+                    onAppLockPinChange = { viewModel.setAppLockPin(it) },
+                    onAppLockEnabledChange = { viewModel.setAppLockEnabled(it) },
+                    onChatBackgroundChange = { viewModel.setChatBackground(it) },
+                    onQuickRepliesChange = { viewModel.setQuickReplies(it) },
+                    onAutoDeleteDaysChange = { viewModel.setAutoDeleteDays(it) },
+                    onMarkdownEnabledChange = { viewModel.setMarkdownEnabled(it) },
+                    onCodeHighlightChange = { viewModel.setCodeHighlight(it) },
+                    onNightModeStartChange = { viewModel.setNightModeStart(it) },
+                    onNightModeEndChange = { viewModel.setNightModeEnd(it) },
+                    onNightModeAutoChange = { viewModel.setNightModeAuto(it) },
+                    onWidgetEnabledChange = { viewModel.setWidgetEnabled(it) },
+                    onEncryptEnabledChange = { viewModel.setEncryptEnabled(it) },
+                    onVoiceReplyChange = { viewModel.setVoiceReply(it) },
+                    onAutoSpaceChange = { viewModel.setAutoSpace(it) },
+                    onDoubleSpaceChange = { viewModel.setDoubleSpace(it) },
+                    onSwipeReplyChange = { viewModel.setSwipeReply(it) },
+                    animationEnabled = animationEnabled,
+                    swipeToDelete = swipeToDelete,
+                    longPressMenu = longPressMenu,
+                    autoSaveDraft = autoSaveDraft,
+                    showWordCount = showWordCount,
+                    autoExpandUrls = autoExpandUrls,
+                    messageBubbleRoundness = messageBubbleRoundness,
+                    defaultChatBubbleColor = defaultChatBubbleColor,
+                    aiMessageAlignment = aiMessageAlignment,
+                    maxMessageLength = maxMessageLength,
+                    confirmBeforeSend = confirmBeforeSend,
+                    showDeliveryStatus = showDeliveryStatus,
+                    quickSendButton = quickSendButton,
+                    hideKeyboardOnSend = hideKeyboardOnSend,
+                    onAnimationEnabledChange = { viewModel.setAnimationEnabled(it) },
+                    onSwipeToDeleteChange = { viewModel.setSwipeToDelete(it) },
+                    onLongPressMenuChange = { viewModel.setLongPressMenu(it) },
+                    onAutoSaveDraftChange = { viewModel.setAutoSaveDraft(it) },
+                    onShowWordCountChange = { viewModel.setShowWordCount(it) },
+                    onAutoExpandUrlsChange = { viewModel.setAutoExpandUrls(it) },
+                    onMessageBubbleRoundnessChange = { viewModel.setMessageBubbleRoundness(it) },
+                    onDefaultChatBubbleColorChange = { viewModel.setDefaultChatBubbleColor(it) },
+                    onAiMessageAlignmentChange = { viewModel.setAiMessageAlignment(it) },
+                    onMaxMessageLengthChange = { viewModel.setMaxMessageLength(it) },
+                    onConfirmBeforeSendChange = { viewModel.setConfirmBeforeSend(it) },
+                    onShowDeliveryStatusChange = { viewModel.setShowDeliveryStatus(it) },
+                    onQuickSendButtonChange = { viewModel.setQuickSendButton(it) },
+                    onHideKeyboardOnSendChange = { viewModel.setHideKeyboardOnSend(it) }
                 )
             }
         }

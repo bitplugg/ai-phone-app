@@ -25,6 +25,48 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
     val themeColor = preferencesManager.themeColor.stateIn(viewModelScope, SharingStarted.Eagerly, "system")
     val telegramWebhook = preferencesManager.telegramWebhook.stateIn(viewModelScope, SharingStarted.Eagerly, "")
     val tokenCount = preferencesManager.tokenCount.stateIn(viewModelScope, SharingStarted.Eagerly, 0)
+    val appLanguage = preferencesManager.appLanguage.stateIn(viewModelScope, SharingStarted.Eagerly, "ru")
+    val notificationsEnabled = preferencesManager.notificationsEnabled.stateIn(viewModelScope, SharingStarted.Eagerly, true)
+    val messageNotifications = preferencesManager.messageNotifications.stateIn(viewModelScope, SharingStarted.Eagerly, false)
+    val showTypingIndicator = preferencesManager.showTypingIndicator.stateIn(viewModelScope, SharingStarted.Eagerly, true)
+    val autoScroll = preferencesManager.autoScroll.stateIn(viewModelScope, SharingStarted.Eagerly, true)
+    val soundEnabled = preferencesManager.soundEnabled.stateIn(viewModelScope, SharingStarted.Eagerly, true)
+    val vibrationEnabled = preferencesManager.vibrationEnabled.stateIn(viewModelScope, SharingStarted.Eagerly, true)
+    val showTimestamps = preferencesManager.showTimestamps.stateIn(viewModelScope, SharingStarted.Eagerly, true)
+    val aiTemperature = preferencesManager.aiTemperature.stateIn(viewModelScope, SharingStarted.Eagerly, 0.7f)
+    val maxTokens = preferencesManager.maxTokens.stateIn(viewModelScope, SharingStarted.Eagerly, 1024)
+    val systemPrompt = preferencesManager.systemPrompt.stateIn(viewModelScope, SharingStarted.Eagerly, "Ты - полезный AI ассистент. Отвечай на русском языке.")
+    val streamingResponse = preferencesManager.streamingResponse.stateIn(viewModelScope, SharingStarted.Eagerly, true)
+    val appLockPin = preferencesManager.appLockPin.stateIn(viewModelScope, SharingStarted.Eagerly, "")
+    val appLockEnabled = preferencesManager.appLockEnabled.stateIn(viewModelScope, SharingStarted.Eagerly, false)
+    val chatBackground = preferencesManager.chatBackground.stateIn(viewModelScope, SharingStarted.Eagerly, "default")
+    val quickReplies = preferencesManager.quickReplies.stateIn(viewModelScope, SharingStarted.Eagerly, "")
+    val autoDeleteDays = preferencesManager.autoDeleteDays.stateIn(viewModelScope, SharingStarted.Eagerly, 0)
+    val markdownEnabled = preferencesManager.markdownEnabled.stateIn(viewModelScope, SharingStarted.Eagerly, true)
+    val codeHighlight = preferencesManager.codeHighlight.stateIn(viewModelScope, SharingStarted.Eagerly, true)
+    val nightModeStart = preferencesManager.nightModeStart.stateIn(viewModelScope, SharingStarted.Eagerly, "22:00")
+    val nightModeEnd = preferencesManager.nightModeEnd.stateIn(viewModelScope, SharingStarted.Eagerly, "07:00")
+    val nightModeAuto = preferencesManager.nightModeAuto.stateIn(viewModelScope, SharingStarted.Eagerly, false)
+    val widgetEnabled = preferencesManager.widgetEnabled.stateIn(viewModelScope, SharingStarted.Eagerly, false)
+    val encryptEnabled = preferencesManager.encryptEnabled.stateIn(viewModelScope, SharingStarted.Eagerly, false)
+    val voiceReply = preferencesManager.voiceReply.stateIn(viewModelScope, SharingStarted.Eagerly, true)
+    val autoSpace = preferencesManager.autoSpace.stateIn(viewModelScope, SharingStarted.Eagerly, true)
+    val doubleSpace = preferencesManager.doubleSpace.stateIn(viewModelScope, SharingStarted.Eagerly, false)
+    val swipeReply = preferencesManager.swipeReply.stateIn(viewModelScope, SharingStarted.Eagerly, true)
+    val animationEnabled = preferencesManager.animationEnabled.stateIn(viewModelScope, SharingStarted.Eagerly, true)
+    val swipeToDelete = preferencesManager.swipeToDelete.stateIn(viewModelScope, SharingStarted.Eagerly, true)
+    val longPressMenu = preferencesManager.longPressMenu.stateIn(viewModelScope, SharingStarted.Eagerly, true)
+    val autoSaveDraft = preferencesManager.autoSaveDraft.stateIn(viewModelScope, SharingStarted.Eagerly, true)
+    val showWordCount = preferencesManager.showWordCount.stateIn(viewModelScope, SharingStarted.Eagerly, false)
+    val autoExpandUrls = preferencesManager.autoExpandUrls.stateIn(viewModelScope, SharingStarted.Eagerly, true)
+    val messageBubbleRoundness = preferencesManager.messageBubbleRoundness.stateIn(viewModelScope, SharingStarted.Eagerly, 16f)
+    val defaultChatBubbleColor = preferencesManager.defaultChatBubbleColor.stateIn(viewModelScope, SharingStarted.Eagerly, "blue")
+    val aiMessageAlignment = preferencesManager.aiMessageAlignment.stateIn(viewModelScope, SharingStarted.Eagerly, "left")
+    val maxMessageLength = preferencesManager.maxMessageLength.stateIn(viewModelScope, SharingStarted.Eagerly, 4096)
+    val confirmBeforeSend = preferencesManager.confirmBeforeSend.stateIn(viewModelScope, SharingStarted.Eagerly, false)
+    val showDeliveryStatus = preferencesManager.showDeliveryStatus.stateIn(viewModelScope, SharingStarted.Eagerly, false)
+    val quickSendButton = preferencesManager.quickSendButton.stateIn(viewModelScope, SharingStarted.Eagerly, true)
+    val hideKeyboardOnSend = preferencesManager.hideKeyboardOnSend.stateIn(viewModelScope, SharingStarted.Eagerly, true)
 
     private val _selectedModel = MutableStateFlow("llama3")
     val selectedModel: StateFlow<String> = _selectedModel.asStateFlow()
@@ -262,5 +304,189 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
 
     fun resetTokenCount() {
         viewModelScope.launch { preferencesManager.resetTokenCount() }
+    }
+
+    fun setAppLanguage(lang: String) {
+        viewModelScope.launch { preferencesManager.setAppLanguage(lang) }
+    }
+
+    fun setNotificationsEnabled(enabled: Boolean) {
+        viewModelScope.launch { preferencesManager.setNotificationsEnabled(enabled) }
+    }
+
+    fun setMessageNotifications(enabled: Boolean) {
+        viewModelScope.launch { preferencesManager.setMessageNotifications(enabled) }
+    }
+
+    fun setShowTypingIndicator(show: Boolean) {
+        viewModelScope.launch { preferencesManager.setShowTypingIndicator(show) }
+    }
+
+    fun setAutoScroll(enabled: Boolean) {
+        viewModelScope.launch { preferencesManager.setAutoScroll(enabled) }
+    }
+
+    fun setSoundEnabled(enabled: Boolean) {
+        viewModelScope.launch { preferencesManager.setSoundEnabled(enabled) }
+    }
+
+    fun setVibrationEnabled(enabled: Boolean) {
+        viewModelScope.launch { preferencesManager.setVibrationEnabled(enabled) }
+    }
+
+    fun setShowTimestamps(show: Boolean) {
+        viewModelScope.launch { preferencesManager.setShowTimestamps(show) }
+    }
+
+    fun setAiTemperature(temp: Float) {
+        viewModelScope.launch { preferencesManager.setAiTemperature(temp) }
+    }
+
+    fun setMaxTokens(tokens: Int) {
+        viewModelScope.launch { preferencesManager.setMaxTokens(tokens) }
+    }
+
+    fun setSystemPrompt(prompt: String) {
+        viewModelScope.launch { preferencesManager.setSystemPrompt(prompt) }
+    }
+
+    fun setStreamingResponse(enabled: Boolean) {
+        viewModelScope.launch { preferencesManager.setStreamingResponse(enabled) }
+    }
+
+    fun getStatistics(): String {
+        var stats = ""
+        viewModelScope.launch {
+            stats = preferencesManager.getStatistics()
+        }
+        return stats
+    }
+
+    fun incrementChatCount() {
+        viewModelScope.launch { preferencesManager.incrementChatCount() }
+    }
+
+    fun incrementMessageCount() {
+        viewModelScope.launch { preferencesManager.incrementMessageCount() }
+    }
+
+    fun setAppLockPin(pin: String) {
+        viewModelScope.launch { preferencesManager.setAppLockPin(pin) }
+    }
+
+    fun setAppLockEnabled(enabled: Boolean) {
+        viewModelScope.launch { preferencesManager.setAppLockEnabled(enabled) }
+    }
+
+    fun setChatBackground(bg: String) {
+        viewModelScope.launch { preferencesManager.setChatBackground(bg) }
+    }
+
+    fun setQuickReplies(replies: String) {
+        viewModelScope.launch { preferencesManager.setQuickReplies(replies) }
+    }
+
+    fun setAutoDeleteDays(days: Int) {
+        viewModelScope.launch { preferencesManager.setAutoDeleteDays(days) }
+    }
+
+    fun setMarkdownEnabled(enabled: Boolean) {
+        viewModelScope.launch { preferencesManager.setMarkdownEnabled(enabled) }
+    }
+
+    fun setCodeHighlight(enabled: Boolean) {
+        viewModelScope.launch { preferencesManager.setCodeHighlight(enabled) }
+    }
+
+    fun setNightModeStart(time: String) {
+        viewModelScope.launch { preferencesManager.setNightModeStart(time) }
+    }
+
+    fun setNightModeEnd(time: String) {
+        viewModelScope.launch { preferencesManager.setNightModeEnd(time) }
+    }
+
+    fun setNightModeAuto(enabled: Boolean) {
+        viewModelScope.launch { preferencesManager.setNightModeAuto(enabled) }
+    }
+
+    fun setWidgetEnabled(enabled: Boolean) {
+        viewModelScope.launch { preferencesManager.setWidgetEnabled(enabled) }
+    }
+
+    fun setEncryptEnabled(enabled: Boolean) {
+        viewModelScope.launch { preferencesManager.setEncryptEnabled(enabled) }
+    }
+
+    fun setVoiceReply(enabled: Boolean) {
+        viewModelScope.launch { preferencesManager.setVoiceReply(enabled) }
+    }
+
+    fun setAutoSpace(enabled: Boolean) {
+        viewModelScope.launch { preferencesManager.setAutoSpace(enabled) }
+    }
+
+    fun setDoubleSpace(enabled: Boolean) {
+        viewModelScope.launch { preferencesManager.setDoubleSpace(enabled) }
+    }
+
+    fun setSwipeReply(enabled: Boolean) {
+        viewModelScope.launch { preferencesManager.setSwipeReply(enabled) }
+    }
+
+    fun setAnimationEnabled(enabled: Boolean) {
+        viewModelScope.launch { preferencesManager.setAnimationEnabled(enabled) }
+    }
+
+    fun setSwipeToDelete(enabled: Boolean) {
+        viewModelScope.launch { preferencesManager.setSwipeToDelete(enabled) }
+    }
+
+    fun setLongPressMenu(enabled: Boolean) {
+        viewModelScope.launch { preferencesManager.setLongPressMenu(enabled) }
+    }
+
+    fun setAutoSaveDraft(enabled: Boolean) {
+        viewModelScope.launch { preferencesManager.setAutoSaveDraft(enabled) }
+    }
+
+    fun setShowWordCount(enabled: Boolean) {
+        viewModelScope.launch { preferencesManager.setShowWordCount(enabled) }
+    }
+
+    fun setAutoExpandUrls(enabled: Boolean) {
+        viewModelScope.launch { preferencesManager.setAutoExpandUrls(enabled) }
+    }
+
+    fun setMessageBubbleRoundness(roundness: Float) {
+        viewModelScope.launch { preferencesManager.setMessageBubbleRoundness(roundness) }
+    }
+
+    fun setDefaultChatBubbleColor(color: String) {
+        viewModelScope.launch { preferencesManager.setDefaultChatBubbleColor(color) }
+    }
+
+    fun setAiMessageAlignment(alignment: String) {
+        viewModelScope.launch { preferencesManager.setAiMessageAlignment(alignment) }
+    }
+
+    fun setMaxMessageLength(length: Int) {
+        viewModelScope.launch { preferencesManager.setMaxMessageLength(length) }
+    }
+
+    fun setConfirmBeforeSend(enabled: Boolean) {
+        viewModelScope.launch { preferencesManager.setConfirmBeforeSend(enabled) }
+    }
+
+    fun setShowDeliveryStatus(enabled: Boolean) {
+        viewModelScope.launch { preferencesManager.setShowDeliveryStatus(enabled) }
+    }
+
+    fun setQuickSendButton(enabled: Boolean) {
+        viewModelScope.launch { preferencesManager.setQuickSendButton(enabled) }
+    }
+
+    fun setHideKeyboardOnSend(enabled: Boolean) {
+        viewModelScope.launch { preferencesManager.setHideKeyboardOnSend(enabled) }
     }
 }

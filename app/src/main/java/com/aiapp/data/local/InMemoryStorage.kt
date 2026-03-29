@@ -157,17 +157,41 @@ class InMemoryStorage {
         }
     }
 
-    fun exportChat(chatId: String): String {
+    fun exportChat(chatId: String, format: String = "txt"): String {
         val chatMessages = _messages.value
             .filter { it.chatId == chatId }
             .sortedBy { it.timestamp }
         
-        return buildString {
-            chatMessages.forEach { msg ->
-                val sender = if (msg.isUser) "Пользователь" else "AI"
-                appendLine("[$sender]")
-                appendLine(msg.text)
-                appendLine()
+        return when (format) {
+            "json" -> {
+                val chat = _chats.value.find { it.id == chatId }
+                val json = StringBuilder()
+                json.appendLine("{")
+                json.appendLine("  \"title\": \"${chat?.title ?: "Chat"}\",")
+                json.appendLine("  \"exportedAt\": \"${java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(java.util.Date())}\",")
+                json.appendLine("  \"messages\": [")
+                chatMessages.forEachIndexed { index, msg ->
+                    val sender = if (msg.isUser) "user" else "assistant"
+                    json.appendLine("    {")
+                    json.appendLine("      \"role\": \"$sender\",")
+                    json.appendLine("      \"content\": \"${msg.text.replace("\"", "\\\"")}\",")
+                    json.appendLine("      \"timestamp\": ${msg.timestamp}")
+                    json.append("    }")
+                    if (index < chatMessages.size - 1) json.appendLine(",") else json.appendLine()
+                }
+                json.appendLine("  ]")
+                json.appendLine("}")
+                json.toString()
+            }
+            else -> {
+                buildString {
+                    chatMessages.forEach { msg ->
+                        val sender = if (msg.isUser) "Пользователь" else "AI"
+                        appendLine("[$sender]")
+                        appendLine(msg.text)
+                        appendLine()
+                    }
+                }
             }
         }
     }

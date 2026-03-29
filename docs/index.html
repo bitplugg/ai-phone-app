@@ -4,9 +4,14 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AI Phone App - AI Assistant for Android</title>
+    <meta name="description" content="AI Phone App - Your personal AI Assistant for Android with Local AI (Ollama) and Cloud AI support">
+    <meta name="keywords" content="AI, Android, Ollama, ChatGPT, DeepSeek, Material Design, Open Source">
+    <meta property="og:title" content="AI Phone App">
+    <meta property="og:description" content="Your personal AI Assistant for Android">
+    <meta property="og:type" content="website">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Space+Grotesk:wght@400;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;700&family=JetBrains+Mono:wght@400;700&family=Space+Grotesk:wght@400;600;700&display=swap" rel="stylesheet">
     <style>
         :root {
             --primary: #6650a4;
@@ -17,17 +22,15 @@
             --text: #e6e1e5;
             --text-secondary: #9e9e9e;
             --glow: rgba(102, 80, 164, 0.5);
+            --success: #4caf50;
+            --warning: #ff9800;
+            --error: #f44336;
+            --gradient-1: linear-gradient(135deg, #6650a4 0%, #7d5260 100%);
+            --gradient-2: linear-gradient(135deg, #d0bcff 0%, #b4a7d6 50%, #7d5260 100%);
         }
 
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        html {
-            scroll-behavior: smooth;
-        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html { scroll-behavior: smooth; }
 
         body {
             font-family: 'Space Grotesk', -apple-system, BlinkMacSystemFont, sans-serif;
@@ -35,16 +38,13 @@
             color: var(--text);
             min-height: 100vh;
             line-height: 1.7;
-            overflow-x: hidden;
         }
 
-        /* Animated Background */
+        /* Background */
         .bg-animation {
             position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
             z-index: -1;
             background: 
                 radial-gradient(ellipse at 20% 20%, rgba(102, 80, 164, 0.15) 0%, transparent 50%),
@@ -53,26 +53,13 @@
             animation: bgShift 20s ease-in-out infinite;
         }
 
-        @keyframes bgShift {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.7; }
-        }
+        @keyframes bgShift { 0%, 100% { opacity: 1; } 50% { opacity: 0.7; } }
 
-        /* Floating Particles */
-        .particles {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            z-index: -1;
-            overflow: hidden;
-        }
+        .particles { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1; overflow: hidden; pointer-events: none; }
 
         .particle {
             position: absolute;
-            width: 4px;
-            height: 4px;
+            width: 4px; height: 4px;
             background: var(--primary);
             border-radius: 50%;
             opacity: 0.3;
@@ -81,62 +68,35 @@
 
         @keyframes float {
             0%, 100% { transform: translateY(100vh) rotate(0deg); opacity: 0; }
-            10% { opacity: 0.5; }
-            90% { opacity: 0.5; }
+            10% { opacity: 0.5; } 90% { opacity: 0.5; }
             100% { transform: translateY(-100vh) rotate(720deg); opacity: 0; }
         }
 
-        .container {
-            max-width: 900px;
-            margin: 0 auto;
-            padding: 2rem;
-        }
+        .container { max-width: 900px; margin: 0 auto; padding: 2rem; }
 
         /* Header */
-        header {
-            text-align: center;
-            padding: 6rem 0 4rem;
-            position: relative;
-        }
+        header { text-align: center; padding: 6rem 0 4rem; position: relative; }
 
-        .logo-container {
-            position: relative;
-            display: inline-block;
-            margin-bottom: 1.5rem;
-        }
+        .logo-container { position: relative; display: inline-block; margin-bottom: 1.5rem; }
 
         .logo-glow {
             position: absolute;
-            top: 50%;
-            left: 50%;
+            top: 50%; left: 50%;
             transform: translate(-50%, -50%);
-            width: 120px;
-            height: 120px;
+            width: 120px; height: 120px;
             background: radial-gradient(circle, var(--glow) 0%, transparent 70%);
             border-radius: 50%;
             animation: pulse 3s ease-in-out infinite;
         }
 
-        @keyframes pulse {
-            0%, 100% { transform: translate(-50%, -50%) scale(1); opacity: 0.6; }
-            50% { transform: translate(-50%, -50%) scale(1.3); opacity: 0.3; }
-        }
+        @keyframes pulse { 0%, 100% { transform: translate(-50%, -50%) scale(1); opacity: 0.6; } 50% { transform: translate(-50%, -50%) scale(1.3); opacity: 0.3; } }
 
-        .logo {
-            font-size: 4rem;
-            position: relative;
-            animation: bounce 2s ease-in-out infinite;
-        }
-
-        @keyframes bounce {
-            0%, 100% { transform: translateY(0); }
-            50% { transform: translateY(-10px); }
-        }
+        .logo { font-size: 4rem; position: relative; animation: bounce 2s ease-in-out infinite; }
+        @keyframes bounce { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
 
         h1 {
-            font-size: 3.5rem;
-            font-weight: 700;
-            background: linear-gradient(135deg, #d0bcff 0%, #b4a7d6 50%, #7d5260 100%);
+            font-size: 3.5rem; font-weight: 700;
+            background: var(--gradient-2);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
@@ -144,24 +104,10 @@
             letter-spacing: -0.02em;
         }
 
-        .tagline {
-            color: var(--text-secondary);
-            font-size: 1.3rem;
-            font-weight: 400;
-        }
+        .tagline { color: var(--text-secondary); font-size: 1.3rem; }
+        .typing { display: inline-block; border-right: 2px solid var(--primary); animation: blink 0.7s step-end infinite; }
+        @keyframes blink { 50% { border-color: transparent; } }
 
-        /* Typing Effect */
-        .typing {
-            display: inline-block;
-            border-right: 2px solid var(--primary);
-            animation: blink 0.7s step-end infinite;
-        }
-
-        @keyframes blink {
-            50% { border-color: transparent; }
-        }
-
-        /* Version Badge */
         .version {
             display: inline-block;
             margin-top: 1.5rem;
@@ -172,15 +118,25 @@
             font-size: 0.9rem;
             color: var(--text-secondary);
             backdrop-filter: blur(10px);
-            transition: all 0.3s ease;
         }
 
-        .version:hover {
-            border-color: var(--primary);
-            box-shadow: 0 0 20px var(--glow);
+        /* Badges */
+        .badges { display: flex; justify-content: center; gap: 1rem; margin-top: 1rem; flex-wrap: wrap; }
+
+        .badge {
+            display: inline-flex; align-items: center; gap: 0.5rem;
+            padding: 0.4rem 0.8rem;
+            background: var(--surface);
+            border-radius: 1rem;
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            border: 1px solid rgba(255,255,255,0.1);
         }
 
-        /* Hero Section */
+        .badge.success { border-color: var(--success); color: var(--success); }
+        .badge.warning { border-color: var(--warning); color: var(--warning); }
+
+        /* Hero */
         .hero {
             background: var(--surface);
             border-radius: 1.5rem;
@@ -189,30 +145,20 @@
             text-align: center;
             border: 1px solid rgba(255,255,255,0.08);
             backdrop-filter: blur(20px);
-            position: relative;
-            overflow: hidden;
+            position: relative; overflow: hidden;
         }
 
         .hero::before {
             content: '';
             position: absolute;
-            top: -50%;
-            left: -50%;
-            width: 200%;
-            height: 200%;
+            top: -50%; left: -50%;
+            width: 200%; height: 200%;
             background: radial-gradient(circle, rgba(102, 80, 164, 0.1) 0%, transparent 50%);
             animation: rotate 20s linear infinite;
         }
 
-        @keyframes rotate {
-            from { transform: rotate(0deg); }
-            to { transform: rotate(360deg); }
-        }
-
-        .hero-content {
-            position: relative;
-            z-index: 1;
-        }
+        @keyframes rotate { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+        .hero-content { position: relative; z-index: 1; }
 
         .hero pre {
             font-family: 'JetBrains Mono', monospace;
@@ -227,37 +173,19 @@
             margin-bottom: 1.5rem;
         }
 
-        /* Download Button */
+        .hero-buttons { display: flex; justify-content: center; gap: 1rem; flex-wrap: wrap; }
+
         .download-btn {
-            display: inline-flex;
-            align-items: center;
-            gap: 0.75rem;
-            background: linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%);
+            display: inline-flex; align-items: center; gap: 0.75rem;
+            background: var(--gradient-1);
             color: white;
-            padding: 1rem 2.5rem;
+            padding: 1rem 2rem;
             border-radius: 3rem;
             text-decoration: none;
             font-weight: 600;
-            font-size: 1.1rem;
-            position: relative;
-            overflow: hidden;
+            font-size: 1rem;
             transition: all 0.3s ease;
             box-shadow: 0 4px 20px rgba(102, 80, 164, 0.4);
-        }
-
-        .download-btn::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: -100%;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
-            transition: left 0.5s ease;
-        }
-
-        .download-btn:hover::before {
-            left: 100%;
         }
 
         .download-btn:hover {
@@ -265,25 +193,17 @@
             box-shadow: 0 8px 30px rgba(102, 80, 164, 0.6);
         }
 
-        .download-btn svg {
-            width: 24px;
-            height: 24px;
+        .download-btn.secondary {
+            background: transparent;
+            border: 2px solid var(--primary);
         }
 
-        /* Features Grid */
-        .section-title {
-            text-align: center;
-            font-size: 2rem;
-            margin: 4rem 0 2rem;
-            color: #d0bcff;
-        }
+        .download-btn.secondary:hover { background: var(--primary); }
 
-        .features {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-            gap: 1.25rem;
-            margin: 2rem 0;
-        }
+        /* Sections */
+        .section-title { text-align: center; font-size: 2rem; margin: 4rem 0 2rem; color: #d0bcff; }
+
+        .features { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1.25rem; margin: 2rem 0; }
 
         .feature {
             background: var(--surface);
@@ -292,52 +212,28 @@
             border: 1px solid rgba(255,255,255,0.05);
             backdrop-filter: blur(10px);
             transition: all 0.3s ease;
-            position: relative;
-            overflow: hidden;
+            position: relative; overflow: hidden;
         }
 
         .feature::before {
             content: '';
             position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 2px;
+            top: 0; left: 0;
+            width: 100%; height: 2px;
             background: linear-gradient(90deg, var(--primary), var(--accent));
             transform: scaleX(0);
             transform-origin: left;
             transition: transform 0.3s ease;
         }
 
-        .feature:hover {
-            transform: translateY(-5px);
-            border-color: rgba(102, 80, 164, 0.3);
-            box-shadow: 0 10px 40px rgba(0,0,0,0.3);
-        }
+        .feature:hover { transform: translateY(-5px); border-color: rgba(102, 80, 164, 0.3); box-shadow: 0 10px 40px rgba(0,0,0,0.3); }
+        .feature:hover::before { transform: scaleX(1); }
 
-        .feature:hover::before {
-            transform: scaleX(1);
-        }
+        .feature-icon { font-size: 2.2rem; margin-bottom: 0.75rem; display: block; }
+        .feature-title { font-weight: 600; margin-bottom: 0.4rem; font-size: 1.1rem; }
+        .feature-desc { font-size: 0.9rem; color: var(--text-secondary); line-height: 1.5; }
 
-        .feature-icon {
-            font-size: 2.2rem;
-            margin-bottom: 0.75rem;
-            display: block;
-        }
-
-        .feature-title {
-            font-weight: 600;
-            margin-bottom: 0.4rem;
-            font-size: 1.1rem;
-        }
-
-        .feature-desc {
-            font-size: 0.9rem;
-            color: var(--text-secondary);
-            line-height: 1.5;
-        }
-
-        /* Cards */
+        /* Card */
         .card {
             background: var(--surface);
             border-radius: 1.25rem;
@@ -347,143 +243,72 @@
             backdrop-filter: blur(20px);
         }
 
-        .card h2 {
-            color: #d0bcff;
-            margin-bottom: 1.25rem;
-            font-size: 1.5rem;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
+        .card h2 { color: #d0bcff; margin-bottom: 1.25rem; font-size: 1.5rem; display: flex; align-items: center; gap: 0.5rem; }
+        .card h3 { color: var(--text); margin: 1.25rem 0 0.75rem; font-size: 1.1rem; }
+        .card ol, .card ul { margin-left: 1.25rem; color: var(--text-secondary); }
+        .card li { margin-bottom: 0.5rem; }
+        .card a { color: #b4a7d6; text-decoration: none; }
+        .card a:hover { text-decoration: underline; }
 
-        .card h3 {
-            color: var(--text);
-            margin: 1.25rem 0 0.75rem;
-            font-size: 1.1rem;
-        }
-
-        .card ol, .card ul {
-            margin-left: 1.25rem;
-            color: var(--text-secondary);
-        }
-
-        .card li {
-            margin-bottom: 0.5rem;
-        }
-
-        .card a {
-            color: #b4a7d6;
-            text-decoration: none;
-            transition: color 0.2s;
-        }
-
-        .card a:hover {
-            color: #d0bcff;
-            text-decoration: underline;
-        }
-
-        code {
-            background: rgba(0,0,0,0.4);
-            padding: 0.2rem 0.5rem;
-            border-radius: 0.35rem;
-            font-family: 'JetBrains Mono', monospace;
-            font-size: 0.9em;
-            color: #d0bcff;
-        }
-
-        pre {
-            background: rgba(0,0,0,0.4);
-            padding: 1rem;
-            border-radius: 0.75rem;
-            overflow-x: auto;
-            margin: 1rem 0;
-            border: 1px solid rgba(102, 80, 164, 0.15);
-        }
+        code { background: rgba(0,0,0,0.4); padding: 0.2rem 0.5rem; border-radius: 0.35rem; font-family: 'JetBrains Mono', monospace; font-size: 0.9em; color: #d0bcff; }
+        pre { background: rgba(0,0,0,0.4); padding: 1rem; border-radius: 0.75rem; overflow-x: auto; margin: 1rem 0; border: 1px solid rgba(102, 80, 164, 0.15); }
 
         /* Stats */
-        .stats {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-            gap: 1rem;
-            margin: 2rem 0;
-        }
+        .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 1rem; margin: 2rem 0; }
+        .stat { text-align: center; padding: 1.5rem; background: rgba(102, 80, 164, 0.1); border-radius: 1rem; border: 1px solid rgba(102, 80, 164, 0.2); }
+        .stat-value { font-size: 2rem; font-weight: 700; color: #d0bcff; }
+        .stat-label { font-size: 0.85rem; color: var(--text-secondary); }
 
-        .stat {
-            text-align: center;
-            padding: 1.5rem;
-            background: rgba(102, 80, 164, 0.1);
-            border-radius: 1rem;
-            border: 1px solid rgba(102, 80, 164, 0.2);
-        }
+        /* Tech Grid */
+        .tech-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 0.75rem; margin: 1rem 0; }
+        .tech-item { text-align: center; padding: 1rem; background: rgba(0,0,0,0.2); border-radius: 0.5rem; }
 
-        .stat-value {
-            font-size: 2rem;
-            font-weight: 700;
-            color: #d0bcff;
-        }
+        /* Comparison Table */
+        .comparison { width: 100%; border-collapse: collapse; margin: 1rem 0; }
+        .comparison th, .comparison td { padding: 0.75rem; text-align: left; border-bottom: 1px solid rgba(255,255,255,0.1); }
+        .comparison th { color: #d0bcff; }
+        .comparison .check { color: var(--success); }
+        .comparison .cross { color: var(--error); }
 
-        .stat-label {
-            font-size: 0.85rem;
-            color: var(--text-secondary);
-        }
+        /* FAQ */
+        .faq-item { background: rgba(0,0,0,0.2); border-radius: 0.75rem; padding: 1.25rem; margin-bottom: 1rem; border-left: 3px solid var(--primary); }
+        .faq-question { font-weight: 600; margin-bottom: 0.5rem; color: var(--text); }
+        .faq-answer { color: var(--text-secondary); font-size: 0.95rem; }
 
         /* Footer */
-        footer {
-            text-align: center;
-            padding: 4rem 2rem 2rem;
-            color: var(--text-secondary);
-        }
+        footer { text-align: center; padding: 4rem 2rem 2rem; color: var(--text-secondary); }
+        footer a { color: #b4a7d6; text-decoration: none; }
+        footer a:hover { color: #d0bcff; }
+        .social-links { display: flex; justify-content: center; gap: 1.5rem; margin: 1.5rem 0; }
+        .social-links a { font-size: 1.5rem; transition: transform 0.2s; }
+        .social-links a:hover { transform: scale(1.2); }
 
-        footer a {
-            color: #b4a7d6;
-            text-decoration: none;
-            transition: all 0.2s;
-        }
+        /* Animations */
+        .fade-in { opacity: 0; transform: translateY(30px); transition: opacity 0.6s ease, transform 0.6s ease; }
+        .fade-in.visible { opacity: 1; transform: translateY(0); }
 
-        footer a:hover {
-            color: #d0bcff;
+        /* Comparison Badge */
+        .comp-badge {
+            display: inline-block;
+            padding: 0.2rem 0.5rem;
+            border-radius: 0.25rem;
+            font-size: 0.75rem;
+            font-weight: 600;
         }
+        .comp-badge.pro { background: var(--success); color: white; }
+        .comp-badge.free { background: var(--primary); color: white; }
 
-        .social-links {
-            display: flex;
-            justify-content: center;
-            gap: 1.5rem;
-            margin: 1.5rem 0;
-        }
-
-        .social-links a {
-            font-size: 1.5rem;
-            transition: transform 0.2s;
-        }
-
-        .social-links a:hover {
-            transform: scale(1.2);
-        }
-
-        /* Scroll Animations */
-        .fade-in {
-            opacity: 0;
-            transform: translateY(30px);
-            transition: opacity 0.6s ease, transform 0.6s ease;
-        }
-
-        .fade-in.visible {
-            opacity: 1;
-            transform: translateY(0);
-        }
-
-        /* Mobile */
         @media (max-width: 600px) {
             h1 { font-size: 2.2rem; }
             .container { padding: 1rem; }
             header { padding: 4rem 0 2rem; }
             .logo { font-size: 3rem; }
             .hero pre { font-size: 0.75rem; padding: 1rem; }
+            .hero-buttons { flex-direction: column; }
         }
     </style>
 </head>
 <body>
-    <!-- Background -->
     <div class="bg-animation"></div>
     <div class="particles" id="particles"></div>
 
@@ -494,13 +319,19 @@
                 <div class="logo">🤖</div>
             </div>
             <h1>AI Phone App</h1>
-            <p class="tagline">
-                <span class="typing" id="typing"></span>
-            </p>
-            <div class="version">v1.0.1 • Latest Release</div>
+            <p class="tagline"><span class="typing" id="typing"></span></p>
+            
+            <div class="badges">
+                <div class="badge">📱 Android 7.0+</div>
+                <div class="badge success">🆓 Open Source</div>
+                <div class="badge">⚡ Fast & Lightweight</div>
+                <div class="badge success">🔒 Privacy First</div>
+                <div class="badge">🎨 Material You</div>
+            </div>
+            
+            <div class="version">v1.0.7 • Latest Release</div>
         </header>
 
-        <!-- Hero -->
         <div class="hero fade-in">
             <div class="hero-content">
                 <pre>
@@ -508,79 +339,60 @@
 ║     🤖 AI Phone Assistant for Android                ║
 ║                                                      ║
 ║   🏠 Local AI  │  ☁️ Cloud AI  │  🎨 Material You   ║
+║   🤖 Ollama    │  🧠 GPT/DeepSeek │  📱 Android    ║
 ╚═══════════════════════════════════════════════════════╝
                 </pre>
-                <a href="https://github.com/bitplugg/ai-phone-app/releases/latest" class="download-btn">
-                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
-                    </svg>
-                    Download APK
-                </a>
+                <div class="hero-buttons">
+                    <a href="https://github.com/bitplugg/ai-phone-app/releases/latest" class="download-btn">
+                        📥 Download APK
+                    </a>
+                    <a href="https://github.com/bitplugg/ai-phone-app" class="download-btn secondary">
+                        ⭐ Star on GitHub
+                    </a>
+                </div>
             </div>
         </div>
 
-        <!-- Stats -->
         <div class="stats fade-in">
-            <div class="stat">
-                <div class="stat-value">4+</div>
-                <div class="stat-label">AI Models</div>
-            </div>
-            <div class="stat">
-                <div class="stat-value">8+</div>
-                <div class="stat-label">Features</div>
-            </div>
-            <div class="stat">
-                <div class="stat-value">6</div>
-                <div class="stat-label">Themes</div>
-            </div>
+            <div class="stat"><div class="stat-value">4+</div><div class="stat-label">AI Models</div></div>
+            <div class="stat"><div class="stat-value">40+</div><div class="stat-label">Settings</div></div>
+            <div class="stat"><div class="stat-value">6</div><div class="stat-label">Themes</div></div>
+            <div class="stat"><div class="stat-value">2</div><div class="stat-label">AI Providers</div></div>
+            <div class="stat"><div class="stat-value">3</div><div class="stat-label">Languages</div></div>
         </div>
 
-        <!-- Features -->
         <h2 class="section-title fade-in">✨ Features</h2>
         <div class="features">
-            <div class="feature fade-in">
-                <span class="feature-icon">🏠</span>
-                <div class="feature-title">Local AI</div>
-                <div class="feature-desc">Connect to Ollama via WiFi for private, fast responses</div>
-            </div>
-            <div class="feature fade-in">
-                <span class="feature-icon">☁️</span>
-                <div class="feature-title">Cloud AI</div>
-                <div class="feature-desc">OpenAI & DeepSeek API support when you're away</div>
-            </div>
-            <div class="feature fade-in">
-                <span class="feature-icon">🎨</span>
-                <div class="feature-title">Material You</div>
-                <div class="feature-desc">Dynamic colors on Android 12+</div>
-            </div>
-            <div class="feature fade-in">
-                <span class="feature-icon">🎤</span>
-                <div class="feature-title">Voice Input</div>
-                <div class="feature-desc">Speech-to-text for hands-free chatting</div>
-            </div>
-            <div class="feature fade-in">
-                <span class="feature-icon">🔊</span>
-                <div class="feature-title">Text-to-Speech</div>
-                <div class="feature-desc">AI reads responses aloud</div>
-            </div>
-            <div class="feature fade-in">
-                <span class="feature-icon">💬</span>
-                <div class="feature-title">Chat History</div>
-                <div class="feature-desc">Multiple conversations with export</div>
-            </div>
-            <div class="feature fade-in">
-                <span class="feature-icon">🖌️</span>
-                <div class="feature-title">Themes</div>
-                <div class="feature-desc">Purple, Blue, Green, Orange, Red</div>
-            </div>
-            <div class="feature fade-in">
-                <span class="feature-icon">📤</span>
-                <div class="feature-title">Export</div>
-                <div class="feature-desc">Backup chats & settings</div>
-            </div>
+            <div class="feature fade-in"><span class="feature-icon">🏠</span><div class="feature-title">Local AI</div><div class="feature-desc">Connect to Ollama via WiFi for private, fast responses</div></div>
+            <div class="feature fade-in"><span class="feature-icon">☁️</span><div class="feature-title">Cloud AI</div><div class="feature-desc">OpenAI & DeepSeek API support when you're away</div></div>
+            <div class="feature fade-in"><span class="feature-icon">🎨</span><div class="feature-title">Material You</div><div class="feature-desc">Dynamic colors on Android 12+</div></div>
+            <div class="feature fade-in"><span class="feature-icon">🎤</span><div class="feature-title">Voice Input</div><div class="feature-desc">Speech-to-text for hands-free chatting</div></div>
+            <div class="feature fade-in"><span class="feature-icon">🔊</span><div class="feature-title">Text-to-Speech</div><div class="feature-desc">AI reads responses aloud</div></div>
+            <div class="feature fade-in"><span class="feature-icon">💬</span><div class="feature-title">Chat History</div><div class="feature-desc">Multiple conversations with export</div></div>
+            <div class="feature fade-in"><span class="feature-icon">🖌️</span><div class="feature-title">6 Themes</div><div class="feature-desc">Purple, Blue, Green, Orange, Red, System</div></div>
+            <div class="feature fade-in"><span class="feature-icon">📤</span><div class="feature-title">Export</div><div class="feature-desc">Backup chats & settings (JSON/TXT)</div></div>
+            <div class="feature fade-in"><span class="feature-icon">🔔</span><div class="feature-title">Telegram Bot</div><div class="feature-desc">Get notifications on your Telegram</div></div>
+            <div class="feature fade-in"><span class="feature-icon">📱</span><div class="feature-title">Device Info</div><div class="feature-desc">View your device specifications</div></div>
+            <div class="feature fade-in"><span class="feature-icon">🌐</span><div class="feature-title">Multi-language</div><div class="feature-desc">Russian, English, Ukrainian</div></div>
+            <div class="feature fade-in"><span class="feature-icon">🤖</span><div class="feature-title">AI Settings</div><div class="feature-desc">Temperature, Max Tokens, Streaming</div></div>
         </div>
 
-        <!-- Installation -->
+        <div class="card fade-in">
+            <h2>⚖️ Comparison: AI Phone App vs Other Apps</h2>
+            <table class="comparison">
+                <tr><th>Feature</th><th>🤖 AI Phone App</th><th>😺 PocketPal</th><th>💬 ChatGPT</th></tr>
+                <tr><td>Local AI (Ollama)</td><td class="check">✅</td><td class="check">✅</td><td class="cross">❌</td></tr>
+                <tr><td>Cloud AI</td><td class="check">✅</td><td class="check">✅</td><td class="check">✅</td></tr>
+                <tr><td>Open Source</td><td class="check">✅</td><td class="cross">❌</td><td class="cross">❌</td></tr>
+                <tr><td>Material You</td><td class="check">✅</td><td class="cross">❌</td><td class="cross">❌</td></tr>
+                <tr><td>Free Forever</td><td class="check">✅</td><td class="warning">⚠️ Freemium</td><td class="warning">⚠️ Freemium</td></tr>
+                <tr><td>TTS</td><td class="check">✅</td><td class="check">✅</td><td class="check">✅</td></tr>
+                <tr><td>Voice Input</td><td class="check">✅</td><td class="check">✅</td><td class="check">✅</td></tr>
+                <tr><td>Custom Themes</td><td class="check">✅</td><td class="cross">❌</td><td class="cross">❌</td></tr>
+                <tr><td>APK Size</td><td>~15MB</td><td>~25MB</td><td>~50MB</td></tr>
+            </table>
+        </div>
+
         <div class="card fade-in">
             <h2>📦 Installation</h2>
             <ol>
@@ -589,15 +401,12 @@
                 <li>Open the APK file and install</li>
                 <li>Enjoy your AI assistant! 🎉</li>
             </ol>
-            
             <h3>Via ADB</h3>
             <pre><code>adb install app-debug.apk</code></pre>
         </div>
 
-        <!-- Configuration -->
         <div class="card fade-in">
             <h2>⚙️ Configuration</h2>
-            
             <h3>🤖 Ollama (Local AI)</h3>
             <ol>
                 <li>Install <a href="https://ollama.ai">Ollama</a> on your PC</li>
@@ -606,27 +415,45 @@
                 <li>Enter IP in app settings: <code>http://192.168.1.100:11434</code></li>
                 <li>Select WiFi mode in app</li>
             </ol>
-            
             <h3>☁️ Cloud AI (OpenAI / DeepSeek)</h3>
             <p>Get API key from <a href="https://platform.openai.com">OpenAI</a> or <a href="https://platform.deepseek.com">DeepSeek</a>, enter in app settings.</p>
         </div>
 
-        <!-- Tech Stack -->
+        <div class="card fade-in">
+            <h2>❓ FAQ</h2>
+            <div class="faq-item">
+                <div class="faq-question">🔒 Is my data safe?</div>
+                <div class="faq-answer">Yes! When using Ollama locally, all conversations stay on your network. Cloud APIs use your API key securely.</div>
+            </div>
+            <div class="faq-item">
+                <div class="faq-question">📡 Can I use it without WiFi?</div>
+                <div class="faq-answer">Yes! Switch to Cloud AI mode (OpenAI or DeepSeek) to use AI anywhere with internet.</div>
+            </div>
+            <div class="faq-item">
+                <div class="faq-question">🔋 Does it drain battery?</div>
+                <div class="faq-answer">Minimal! The app only uses battery when actively communicating with AI. Ollama runs on your PC, not the phone.</div>
+            </div>
+            <div class="faq-item">
+                <div class="faq-question">🌐 What models are supported?</div>
+                <div class="faq-answer">Locally: Llama 3, Mistral, CodeLlama and more. Cloud: GPT-4, GPT-3.5, DeepSeek V3.</div>
+            </div>
+            <div class="faq-item">
+                <div class="faq-question">💰 Is it really free?</div>
+                <div class="faq-answer">Yes! 100% free and open source. You only pay for cloud API calls (OpenAI/DeepSeek) if you use them.</div>
+            </div>
+        </div>
+
         <div class="card fade-in">
             <h2>🛠️ Tech Stack</h2>
-            <div class="features">
-                <div class="feature" style="padding: 1rem;">
-                    <div class="feature-title">Kotlin</div>
-                </div>
-                <div class="feature" style="padding: 1rem;">
-                    <div class="feature-title">Jetpack Compose</div>
-                </div>
-                <div class="feature" style="padding: 1rem;">
-                    <div class="feature-title">Material 3</div>
-                </div>
-                <div class="feature" style="padding: 1rem;">
-                    <div class="feature-title">GitHub Actions</div>
-                </div>
+            <div class="tech-grid">
+                <div class="tech-item">Kotlin</div>
+                <div class="tech-item">Jetpack Compose</div>
+                <div class="tech-item">Material 3</div>
+                <div class="tech-item">GitHub Actions</div>
+                <div class="tech-item">OkHttp</div>
+                <div class="tech-item">Coroutines</div>
+                <div class="tech-item">DataStore</div>
+                <div class="tech-item">MVVM</div>
             </div>
         </div>
 
@@ -642,7 +469,6 @@
     </div>
 
     <script>
-        // Create particles
         const particlesContainer = document.getElementById('particles');
         for (let i = 0; i < 30; i++) {
             const particle = document.createElement('div');
@@ -653,56 +479,25 @@
             particlesContainer.appendChild(particle);
         }
 
-        // Typing effect
-        const phrases = [
-            'Your personal AI Assistant',
-            'Local AI + Cloud AI',
-            'Powered by Ollama',
-            'Material You Design'
-        ];
-        let phraseIndex = 0;
-        let charIndex = 0;
-        let isDeleting = false;
+        const phrases = ['Your personal AI Assistant', 'Local AI + Cloud AI', 'Powered by Ollama', 'Material You Design', '100% Free & Open Source'];
+        let phraseIndex = 0, charIndex = 0, isDeleting = false;
         const typingEl = document.getElementById('typing');
 
         function type() {
             const currentPhrase = phrases[phraseIndex];
-            
-            if (isDeleting) {
-                typingEl.textContent = currentPhrase.substring(0, charIndex - 1);
-                charIndex--;
-            } else {
-                typingEl.textContent = currentPhrase.substring(0, charIndex + 1);
-                charIndex++;
-            }
-
+            if (isDeleting) { typingEl.textContent = currentPhrase.substring(0, charIndex - 1); charIndex--; }
+            else { typingEl.textContent = currentPhrase.substring(0, charIndex + 1); charIndex++; }
             let typeSpeed = isDeleting ? 50 : 100;
-
-            if (!isDeleting && charIndex === currentPhrase.length) {
-                typeSpeed = 2000;
-                isDeleting = true;
-            } else if (isDeleting && charIndex === 0) {
-                isDeleting = false;
-                phraseIndex = (phraseIndex + 1) % phrases.length;
-                typeSpeed = 500;
-            }
-
+            if (!isDeleting && charIndex === currentPhrase.length) { typeSpeed = 2000; isDeleting = true; }
+            else if (isDeleting && charIndex === 0) { isDeleting = false; phraseIndex = (phraseIndex + 1) % phrases.length; typeSpeed = 500; }
             setTimeout(type, typeSpeed);
         }
-
         type();
 
-        // Scroll animations
         const fadeElements = document.querySelectorAll('.fade-in');
-        
         const observer = new IntersectionObserver((entries) => {
-            entries.forEach(entry => {
-                if (entry.isIntersecting) {
-                    entry.target.classList.add('visible');
-                }
-            });
+            entries.forEach(entry => { if (entry.isIntersecting) entry.target.classList.add('visible'); });
         }, { threshold: 0.1 });
-
         fadeElements.forEach(el => observer.observe(el));
     </script>
 </body>
