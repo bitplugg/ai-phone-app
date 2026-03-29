@@ -71,7 +71,7 @@ dependencies {
     implementation("androidx.compose.animation:animation")
 
     implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.6.2")
-    implementation("androidx.navigation:navigation-compose:2.7.5")
+    implementation("androidx.navigation:navigation-compose:2.9.7")
 
     implementation("androidx.datastore:datastore-preferences:1.0.0")
 
