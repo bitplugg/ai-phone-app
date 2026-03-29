@@ -9,7 +9,10 @@ data class Chat(
     val title: String,
     val model: String = "assistant",
     val createdAt: Long = System.currentTimeMillis(),
-    val updatedAt: Long = System.currentTimeMillis()
+    val updatedAt: Long = System.currentTimeMillis(),
+    val category: String = "default",
+    val isPinned: Boolean = false,
+    val isMuted: Boolean = false
 )
 
 data class ChatMessage(
@@ -17,7 +20,10 @@ data class ChatMessage(
     val chatId: String,
     val text: String,
     val isUser: Boolean,
-    val timestamp: Long = System.currentTimeMillis()
+    val timestamp: Long = System.currentTimeMillis(),
+    val reactions: Map<String, Int> = emptyMap(),
+    val isPinned: Boolean = false,
+    val isEdited: Boolean = false
 )
 
 data class ModelInfo(
@@ -225,5 +231,69 @@ class InMemoryStorage {
 
     fun getChatMessagesSync(chatId: String): List<ChatMessage> {
         return _messages.value.filter { it.chatId == chatId }.sortedBy { it.timestamp }
+    }
+
+    fun addReaction(messageId: Long, emoji: String) {
+        _messages.value = _messages.value.map { msg ->
+            if (msg.id == messageId) {
+                val reactions = msg.reactions.toMutableMap()
+                reactions[emoji] = (reactions[emoji] ?: 0) + 1
+                msg.copy(reactions = reactions)
+            } else msg
+        }
+    }
+
+    fun removeReaction(messageId: Long, emoji: String) {
+        _messages.value = _messages.value.map { msg ->
+            if (msg.id == messageId) {
+                val reactions = msg.reactions.toMutableMap()
+                val count = (reactions[emoji] ?: 1) - 1
+                if (count > 0) reactions[emoji] = count else reactions.remove(emoji)
+                msg.copy(reactions = reactions)
+            } else msg
+        }
+    }
+
+    fun toggleMessagePin(messageId: Long) {
+        _messages.value = _messages.value.map { msg ->
+            if (msg.id == messageId) msg.copy(isPinned = !msg.isPinned)
+            else msg
+        }
+    }
+
+    fun setChatCategory(chatId: String, category: String) {
+        _chats.value = _chats.value.map { chat ->
+            if (chat.id == chatId) chat.copy(category = category)
+            else chat
+        }
+    }
+
+    fun toggleChatPin(chatId: String) {
+        _chats.value = _chats.value.map { chat ->
+            if (chat.id == chatId) chat.copy(isPinned = !chat.isPinned)
+            else chat
+        }
+    }
+
+    fun toggleChatMute(chatId: String) {
+        _chats.value = _chats.value.map { chat ->
+            if (chat.id == chatId) chat.copy(isMuted = !chat.isMuted)
+            else chat
+        }
+    }
+
+    fun getChatsByCategory(category: String): List<Chat> {
+        return if (category == "all") _chats.value
+        else _chats.value.filter { it.category == category }
+    }
+
+    fun searchMessagesInChat(chatId: String, query: String): List<ChatMessage> {
+        return _messages.value.filter { 
+            it.chatId == chatId && it.text.contains(query, ignoreCase = true) 
+        }.sortedBy { it.timestamp }
+    }
+
+    fun getCategories(): List<String> {
+        return _chats.value.map { it.category }.distinct().filter { it != "default" }
     }
 }

@@ -274,7 +274,8 @@ class MainActivity : ComponentActivity() {
                     onConfirmBeforeSendChange = { viewModel.setConfirmBeforeSend(it) },
                     onShowDeliveryStatusChange = { viewModel.setShowDeliveryStatus(it) },
                     onQuickSendButtonChange = { viewModel.setQuickSendButton(it) },
-                    onHideKeyboardOnSendChange = { viewModel.setHideKeyboardOnSend(it) }
+                    onHideKeyboardOnSendChange = { viewModel.setHideKeyboardOnSend(it) },
+                    onAddReaction = { messageId, emoji -> viewModel.addReaction(messageId, emoji) }
                 )
             }
         }

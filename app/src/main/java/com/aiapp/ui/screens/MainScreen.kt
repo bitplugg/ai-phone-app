@@ -170,6 +170,7 @@ fun MainScreen(
     onShowDeliveryStatusChange: (Boolean) -> Unit = {},
     onQuickSendButtonChange: (Boolean) -> Unit = {},
     onHideKeyboardOnSendChange: (Boolean) -> Unit = {},
+    onAddReaction: ((Long, String) -> Unit)? = null,
 ) {
     var inputText by remember { mutableStateOf("") }
     var searchQuery by remember { mutableStateOf("") }
@@ -257,6 +258,7 @@ fun MainScreen(
                         currentChatId = currentChatId,
                         onClearChat = onClearChat,
                         onExportChat = onExportChat,
+                        onAddReaction = onAddReaction,
                         modifier = Modifier.padding(padding)
                     )
                 }
@@ -565,6 +567,7 @@ fun ChatScreenContent(
     currentChatId: String? = null,
     onClearChat: ((String) -> Unit)? = null,
     onExportChat: ((String) -> String)? = null,
+    onAddReaction: ((Long, String) -> Unit)? = null,
     modifier: Modifier = Modifier
 ) {
     val listState = rememberLazyListState()
@@ -651,7 +654,8 @@ fun ChatScreenContent(
                 MessageBubble(
                     message = message,
                     isUser = message.isUser,
-                    username = username
+                    username = username,
+                    onAddReaction = onAddReaction
                 )
             }
         }
@@ -703,9 +707,12 @@ fun ChatScreenContent(
 fun MessageBubble(
     message: ChatMessage,
     isUser: Boolean,
-    username: String
+    username: String,
+    onAddReaction: ((Long, String) -> Unit)? = null
 ) {
     val context = LocalContext.current
+    var showReactionPicker by remember { mutableStateOf(false) }
+    val reactions = listOf("👍", "❤️", "😂", "😮", "😢", "🔥")
 
     Row(
         modifier = Modifier.fillMaxWidth(),
@@ -756,10 +763,39 @@ fun MessageBubble(
                         MaterialTheme.colorScheme.onSurface
                     }
                 )
+                
+                if (message.reactions.isNotEmpty()) {
+                    Row(
+                        modifier = Modifier.padding(top = 8.dp),
+                        horizontalArrangement = Arrangement.spacedBy(4.dp)
+                    ) {
+                        message.reactions.forEach { (emoji, count) ->
+                            Surface(
+                                shape = MaterialTheme.shapes.small,
+                                color = MaterialTheme.colorScheme.surfaceVariant
+                            ) {
+                                Text(
+                                    text = "$emoji $count",
+                                    style = MaterialTheme.typography.labelSmall,
+                                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                                )
+                            }
+                        }
+                    }
+                }
+                
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.End
                 ) {
+                    if (onAddReaction != null) {
+                        IconButton(onClick = { showReactionPicker = !showReactionPicker }) {
+                            Icon(
+                                Icons.Default.EmojiEmotions,
+                                contentDescription = "Реакции"
+                            )
+                        }
+                    }
                     CopyButton(text = message.text)
                     IconButton(
                         onClick = {
@@ -774,6 +810,24 @@ fun MessageBubble(
                             Icons.Default.Share,
                             contentDescription = "Поделиться"
                         )
+                    }
+                }
+                
+                if (showReactionPicker && onAddReaction != null) {
+                    Row(
+                        modifier = Modifier.padding(top = 8.dp),
+                        horizontalArrangement = Arrangement.spacedBy(4.dp)
+                    ) {
+                        reactions.forEach { emoji ->
+                            IconButton(
+                                onClick = {
+                                    onAddReaction(message.id, emoji)
+                                    showReactionPicker = false
+                                }
+                            ) {
+                                Text(emoji, style = MaterialTheme.typography.titleMedium)
+                            }
+                        }
                     }
                 }
             }

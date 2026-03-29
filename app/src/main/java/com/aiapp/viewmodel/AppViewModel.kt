@@ -221,6 +221,38 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
         return storage.searchMessages(query)
     }
 
+    fun searchMessagesInChat(chatId: String, query: String): List<com.aiapp.data.local.ChatMessage> {
+        return storage.searchMessagesInChat(chatId, query)
+    }
+
+    fun addReaction(messageId: Long, emoji: String) {
+        viewModelScope.launch { storage.addReaction(messageId, emoji) }
+    }
+
+    fun removeReaction(messageId: Long, emoji: String) {
+        viewModelScope.launch { storage.removeReaction(messageId, emoji) }
+    }
+
+    fun toggleMessagePin(messageId: Long) {
+        viewModelScope.launch { storage.toggleMessagePin(messageId) }
+    }
+
+    fun setChatCategory(chatId: String, category: String) {
+        viewModelScope.launch { storage.setChatCategory(chatId, category) }
+    }
+
+    fun toggleChatPin(chatId: String) {
+        viewModelScope.launch { storage.toggleChatPin(chatId) }
+    }
+
+    fun toggleChatMute(chatId: String) {
+        viewModelScope.launch { storage.toggleChatMute(chatId) }
+    }
+
+    fun getCategories(): List<String> {
+        return storage.getCategories()
+    }
+
     fun exportChat(chatId: String): String {
         return storage.exportChat(chatId)
     }
