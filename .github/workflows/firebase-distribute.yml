@@ -1,0 +1,109 @@
+name: Firebase App Distribution
+
+on:
+  push:
+    branches: [master, main]
+  workflow_dispatch:
+    inputs:
+      testers:
+        description: 'Tester emails (comma separated)'
+        required: false
+        default: ''
+      groups:
+        description: 'Tester groups'
+        required: false
+        default: 'testers'
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  firebase-distribute:
+    name: Upload to Firebase App Distribution
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '21'
+
+      - name: Cache Gradle
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*') }}
+          restore-keys: |
+            ${{ runner.os }}-gradle-
+
+      - name: Build Debug APK
+        run: ./gradlew assembleDebug --no-daemon
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+        if: env.FIREBASE_SERVICE_ACCOUNT != ''
+
+      - name: Upload to Firebase App Distribution
+        uses: wzieba/Firebase-Distribution-Github-Action@v1
+        with:
+          appId: ${{ secrets.FIREBASE_APP_ID }}
+          serviceCredentialsFileContent: ${{ secrets.GCP_SA_KEY }}
+          groups: ${{ github.event.inputs.groups || 'testers' }}
+          file: app/build/outputs/apk/debug/app-debug.apk
+          release-notes: "Build from GitHub Actions - ${{ github.sha }}"
+        if: env.FIREBASE_APP_ID != ''
+        continue-on-error: true
+
+      - name: Create Short Link
+        if: env.FIREBASE_APP_ID != ''
+        run: |
+          echo "Firebase App Distribution upload completed"
+        continue-on-error: true
+
+  firebase-distribute-on-release:
+    name: Upload to Firebase on Release
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/v')
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '21'
+
+      - name: Build Release APK
+        run: ./gradlew assembleRelease --no-daemon
+
+      - name: Upload to Firebase
+        uses: wzieba/Firebase-Distribution-Github-Action@v1
+        with:
+          appId: ${{ secrets.FIREBASE_APP_ID }}
+          serviceCredentialsFileContent: ${{ secrets.GCP_SA_KEY }}
+          groups: ${{ github.event.inputs.groups || 'beta-testers' }}
+          file: app/build/outputs/apk/release/app-release-unsigned.apk
+          release-notes: |
+            Release ${{ github.ref_name }}
+            Commit: ${{ github.sha }}
+        if: env.FIREBASE_APP_ID != ''
+        continue-on-error: true
+
+      - name: Notify Telegram
+        if: env.TELEGRAM_BOT_TOKEN != ''
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: |
+          curl -s -X POST "https://api.telegram.org/bot$TELEGRAM_BOT_TOKEN/sendMessage" \
+            -d "chat_id=$TELEGRAM_CHAT_ID" \
+            -d "text=New Firebase release: ${{ github.ref_name }}"

@@ -1,0 +1,134 @@
+name: Documentation Generator
+
+on:
+  push:
+    branches: [master, main]
+  schedule:
+    - cron: '0 0 * * 0'  # Weekly
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+jobs:
+  api-docs:
+    name: Generate API Documentation
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '21'
+
+      - name: Cache Gradle
+        uses: actions/cache@v4
+        with:
+          path: ~/.gradle/caches
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*') }}
+
+      - name: Generate Dokka documentation
+        run: ./gradlew dokkaHtml --no-daemon || true
+
+      - name: Upload API docs
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: api-docs
+          path: app/build/dokka/html/
+          retention-days: 30
+
+  changelog:
+    name: Auto-update Changelog
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/v')
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Generate changelog
+        id: changelog
+        run: |
+          # Generate changelog from commits
+          CHANGELOG=$(git log --pretty=format:"- %s" ${{ github.event.repository.default_branch }}..HEAD)
+          echo "CHANGELOG<<EOF" >> $GITHUB_OUTPUT
+          echo "$CHANGELOG" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+      - name: Update CHANGELOG.md
+        run: |
+          echo "# Changelog" > CHANGELOG.md
+          echo "" >> CHANGELOG.md
+          echo "## ${{ github.ref_name }}" >> CHANGELOG.md
+          echo "" >> CHANGELOG.md
+          echo "${{ steps.changelog.outputs.CHANGELOG }}" >> CHANGELOG.md
+          echo "" >> CHANGELOG.md
+          cat CHANGELOG.md
+
+      - name: Commit changelog
+        uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          commit_message: "docs: Update changelog"
+          file_pattern: CHANGELOG.md
+
+  deploy-docs:
+    name: Deploy API Docs to Pages
+    needs: api-docs
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Download API docs
+        uses: actions/download-artifact@v4
+        with:
+          name: api-docs
+          path: docs/api
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v4
+
+      - name: Upload to GitHub Pages
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: docs/api
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
+
+  publish-wiki:
+    name: Update Wiki
+    runs-on: ubuntu-latest
+    if: false  # Requires wiki repository setup
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ github.repository }}.wiki
+          path: wiki
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Update wiki
+        if: false
+        run: |
+          echo "# $(date)" >> wiki/Home.md
+          echo "Updated from commit ${{ github.sha }}" >> wiki/Home.md
+
+      - name: Push wiki
+        if: false
+        uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          commit_message: "Update from CI"
+          file_pattern: wiki/
