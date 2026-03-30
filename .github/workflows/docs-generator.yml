@@ -82,6 +82,7 @@ jobs:
     name: Deploy API Docs to Pages
     needs: api-docs
     runs-on: ubuntu-latest
+    if: false  # Disabled - requires Dokka setup
     permissions:
       contents: write
       pages: write
