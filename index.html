@@ -832,6 +832,36 @@
                 <div class="feature-title">AI Settings</div>
                 <div class="feature-desc">Temperature, Max Tokens, System Prompt, Streaming response</div>
             </div>
+            <div class="feature fade-in">
+                <span class="feature-icon">😀</span>
+                <div class="feature-title">Message Reactions</div>
+                <div class="feature-desc">React to messages with emojis 👍 ❤️ 😂 😮 😢 🔥</div>
+            </div>
+            <div class="feature fade-in">
+                <span class="feature-icon">📂</span>
+                <div class="feature-title">Chat Categories</div>
+                <div class="feature-desc">Organize chats into folders and categories</div>
+            </div>
+            <div class="feature fade-in">
+                <span class="feature-icon">📌</span>
+                <div class="feature-title">Pin & Mute Chats</div>
+                <div class="feature-desc">Pin important chats, mute notifications</div>
+            </div>
+            <div class="feature fade-in">
+                <span class="feature-icon">🔍</span>
+                <div class="feature-title">In-Chat Search</div>
+                <div class="feature-desc">Search messages within a specific chat</div>
+            </div>
+            <div class="feature fade-in">
+                <span class="feature-icon">🎯</span>
+                <div class="feature-title">85+ Settings</div>
+                <div class="feature-desc">Full customization: animations, gestures, UI, input behavior</div>
+            </div>
+            <div class="feature fade-in">
+                <span class="feature-icon">📦</span>
+                <div class="feature-title">Firebase Distribution</div>
+                <div class="feature-desc">Auto-upload to Firebase App Distribution for testers</div>
+            </div>
         </div>
 
         <h2 class="section-title fade-in">🎛️ 85+ Settings</h2>
@@ -977,6 +1007,25 @@ adb install -r app-release.apk  # Reinstall</code></pre>
                 <div class="faq-question">🐛 Found a bug?</div>
                 <div class="faq-answer">Please report it on <a href="https://github.com/bitplugg/ai-phone-app/issues">GitHub Issues</a>! We actively fix bugs and appreciate your feedback.</div>
             </div>
+        </div>
+
+        <div class="card fade-in">
+            <h2>🤖 GitHub Actions (12 Workflows)</h2>
+            <table class="comparison">
+                <tr><th>Workflow</th><th>Описание</th></tr>
+                <tr><td>lint.yml</td><td>Android Lint, ktlint, Detekt, APK size check</td></tr>
+                <tr><td>test.yml</td><td>Unit тесты, JaCoCo покрытие, Codecov</td></tr>
+                <tr><td>security.yml</td><td>Dependency review, CodeQL, secret scanning</td></tr>
+                <tr><td>build.yml</td><td>Сборка Debug/Release APK</td></tr>
+                <tr><td>release.yml</td><td>Авто-релизы при пуше тегов v*</td></tr>
+                <tr><td>pages.yml</td><td>GitHub Pages для сайта</td></tr>
+                <tr><td>ci-dashboard.yml</td><td>Сводка всех workflow</td></tr>
+                <tr><td>instrumented-tests.yml</td><td>Тесты на Android эмуляторе</td></tr>
+                <tr><td>firebase-distribute.yml</td><td>Firebase App Distribution</td></tr>
+                <tr><td>docs-generator.yml</td><td>Dokka API документация</td></tr>
+                <tr><td>build-stats.yml</td><td>Статистика сборки и размера APK</td></tr>
+                <tr><td>community.yml</td><td>Авто-лабелинг, good first issues</td></tr>
+            </table>
         </div>
 
         <div class="card fade-in">
