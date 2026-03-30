@@ -6,75 +6,170 @@ on:
       message:
         description: 'Message to send'
         required: false
-        default: 'Test message from AI Phone App'
-  schedule:
-    - cron: '0 * * * *'  # Every hour
+        default: ''
+  workflow_run:
+    workflows: [Build and Release, Release, Lint & Code Quality, Tests, Security Scan]
+    types: [completed]
+  push:
+    branches: [master, main]
 
 permissions:
   contents: read
 
 jobs:
-  send-notification:
-    name: Send Telegram Notification
+  notify-build:
+    name: Notify Build Status
     runs-on: ubuntu-latest
+    if: github.event_name == 'workflow_run'
     steps:
-      - name: Send Telegram Message
+      - name: Get workflow info
+        id: info
+        run: |
+          echo "WORKFLOW_NAME=${{ github.event.workflow.name }}" >> $GITHUB_OUTPUT
+          echo "STATUS=${{ github.event.workflow_run.conclusion }}" >> $GITHUB_OUTPUT
+          echo "URL=${{ github.event.workflow_run.html_url }}" >> $GITHUB_OUTPUT
+
+      - name: Download APKs
+        if: steps.info.outputs.STATUS == 'success' && (github.event.workflow.name == 'Build and Release' || github.event.workflow.name == 'Release')
+        uses: actions/download-artifact@v4
+        with:
+          name: app-debug
+          path: apks
+        continue-on-error: true
+
+      - name: Send Telegram Notification
         if: env.TELEGRAM_BOT_TOKEN != ''
         env:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
         run: |
-          MESSAGE="${{ github.event.inputs.message || '🤖 AI Phone App - Build completed successfully!' }}"
+          WORKFLOW="${{ steps.info.outputs.WORKFLOW_NAME }}"
+          STATUS="${{ steps.info.outputs.STATUS }}"
+          URL="${{ steps.info.outputs.URL }}"
           
-          # Send message
+          if [ "$STATUS" == "success" ]; then
+            EMOJI="✅"
+            STATUS_TEXT="Успешно"
+          elif [ "$STATUS" == "failure" ]; then
+            EMOJI="❌"
+            STATUS_TEXT="Ошибка"
+          else
+            EMOJI="⚠️"
+            STATUS_TEXT="$STATUS"
+          fi
+          
+          MESSAGE="<b>🤖 AI Phone App - $WORKFLOW</b>
+
+$EMOJI <b>Статус:</b> $STATUS_TEXT
+🔗 <a href=\"$URL\">Открыть в GitHub</a>
+
+📅 $(date '+%d.%m.%Y %H:%M')"
+          
+          curl -s -X POST "https://api.telegram.org/bot$TELEGRAM_BOT_TOKEN/sendMessage" \
+            -d "chat_id=$TELEGRAM_CHAT_ID" \
+            -d "text=$MESSAGE" \
+            -d "parse_mode=HTML" \
+            -d "disable_web_page_preview=false"
+
+  notify-push:
+    name: Notify Push
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push'
+    steps:
+      - name: Send Push Notification
+        if: env.TELEGRAM_BOT_TOKEN != ''
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: |
+          COMMIT_MSG=$(git log -1 --pretty=format:"%s")
+          AUTHOR=$(git log -1 --pretty=format:"%an")
+          BRANCH="${{ github.ref_name }}"
+          
+          MESSAGE="<b>📝 Новый Push в AI Phone App</b>
+
+🌿 <b>Ветка:</b> $BRANCH
+👤 <b>Автор:</b> $AUTHOR
+📝 <b>Коммит:</b> $COMMIT_MSG
+🔗 <a href=\"https://github.com/bitplugg/ai-phone-app/actions\">Открыть Actions</a>
+
+📅 $(date '+%d.%m.%Y %H:%M')"
+          
           curl -s -X POST "https://api.telegram.org/bot$TELEGRAM_BOT_TOKEN/sendMessage" \
             -d "chat_id=$TELEGRAM_CHAT_ID" \
             -d "text=$MESSAGE" \
             -d "parse_mode=HTML"
+
+  manual-message:
+    name: Send Manual Message
+    runs-on: ubuntu-latest
+    if: github.event_name == 'workflow_dispatch' && inputs.message != ''
+    steps:
+      - name: Send Message
+        if: env.TELEGRAM_BOT_TOKEN != ''
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          MSG: ${{ inputs.message }}
+        run: |
+          MESSAGE="$MSG"
           
-          echo "Message sent: $MESSAGE"
+          curl -s -X POST "https://api.telegram.org/bot$TELEGRAM_BOT_TOKEN/sendMessage" \
+            -d "chat_id=$TELEGRAM_CHAT_ID" \
+            -d "text=$MESSAGE" \
+            -d "parse_mode=HTML"
 
   build-status:
-    name: Send Build Status
+    name: Get Build Status
     runs-on: ubuntu-latest
-    if: github.event_name == 'workflow_run'
     steps:
-      - name: Get Workflow Status
-        env:
-          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
-          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+      - name: Get latest builds
+        id: builds
         run: |
-          # Get latest workflow status
-          WORKFLOW_NAME="${{ github.event.workflow.name }}"
-          CONCLUSION="${{ github.event.workflow_run.conclusion }}"
+          # Get last 5 workflow runs
+          echo "runs<<EOF" >> $GITHUB_OUTPUT
+          echo "| Workflow | Status | Time |" >> $GITHUB_OUTPUT
+          echo "|----------|--------|------|" >> $GITHUB_OUTPUT
           
-          if [ "$CONCLUSION" == "success" ]; then
-            EMOJI="✅"
-          elif [ "$CONCLUSION" == "failure" ]; then
-            EMOJI="❌"
-          else
-            EMOJI="⚠️"
-          fi
+          for wf in "Build and Release" "Lint & Code Quality" "Tests" "Security Scan"; do
+            STATUS=$(gh run list --repo bitplugg/ai-phone-app --workflow "$wf" --limit 1 --json conclusion --jq '.[0].conclusion')
+            TIME=$(gh run list --repo bitplugg/ai-phone-app --workflow "$wf" --limit 1 --json updatedAt --jq -r '.[0].updatedAt' | cut -d'T' -f1)
+            
+            if [ "$STATUS" == "success" ]; then
+              EMOJI="✅"
+            elif [ "$STATUS" == "failure" ]; then
+              EMOJI="❌"
+            elif [ "$STATUS" == "in_progress" ]; then
+              EMOJI="🔄"
+            else
+              EMOJI="⚪"
+            fi
+            
+            echo "| $wf | $EMOJI $STATUS | $TIME |" >> $GITHUB_OUTPUT
+          done
           
-          MESSAGE="$EMOJI $WORKFLOW_NAME: $CONCLUSION"
-          
-          curl -s -X POST "https://api.telegram.org/bot$TELEGRAM_BOT_TOKEN/sendMessage" \
-            -d "chat_id=$TELEGRAM_CHAT_ID" \
-            -d "text=$MESSAGE"
+          echo "EOF" >> $GITHUB_OUTPUT
 
-  daily-reminder:
-    name: Daily Reminder
-    runs-on: ubuntu-latest
-    if: false  # Enable if needed
-    steps:
-      - name: Send Daily Message
+      - name: Send Dashboard
+        if: env.TELEGRAM_BOT_TOKEN != ''
         env:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
         run: |
-          DATE=$(date '+%Y-%m-%d %H:%M')
-          MESSAGE="📱 AI Phone App - Daily check at $DATE"
+          MESSAGE="<b>📊 AI Phone App - Build Dashboard</b>
+
+${{ steps.builds.outputs.runs }}
+
+<b>📱 Quick Links:</b>
+🔗 <a href=\"https://github.com/bitplugg/ai-phone-app/releases\">Releases</a>
+📦 <a href=\"https://github.com/bitplugg/ai-phone-app/actions\">Actions</a>
+🐛 <a href=\"https://github.com/bitplugg/ai-phone-app/issues\">Issues</a>
+📖 <a href=\"https://bitplugg.github.io/ai-phone-app/\">Website</a>
+
+<i>Updated: $(date '+%d.%m.%Y %H:%M')</i>"
           
           curl -s -X POST "https://api.telegram.org/bot$TELEGRAM_BOT_TOKEN/sendMessage" \
             -d "chat_id=$TELEGRAM_CHAT_ID" \
-            -d "text=$MESSAGE"
+            -d "text=$MESSAGE" \
+            -d "parse_mode=HTML" \
+            -d "disable_web_page_preview=false"
