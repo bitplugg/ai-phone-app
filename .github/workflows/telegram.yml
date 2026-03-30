@@ -7,6 +7,10 @@ on:
         description: 'Message to send'
         required: false
         default: ''
+      action:
+        description: 'Action: message, dashboard, release'
+        required: false
+        default: 'message'
   workflow_run:
     workflows: [Build and Release, Release, Lint & Code Quality, Tests, Security Scan]
     types: [completed]
