@@ -29,14 +29,6 @@ jobs:
           echo "STATUS=${{ github.event.workflow_run.conclusion }}" >> $GITHUB_OUTPUT
           echo "URL=${{ github.event.workflow_run.html_url }}" >> $GITHUB_OUTPUT
 
-      - name: Download APKs
-        if: steps.info.outputs.STATUS == 'success' && (github.event.workflow.name == 'Build and Release' || github.event.workflow.name == 'Release')
-        uses: actions/download-artifact@v4
-        with:
-          name: app-debug
-          path: apks
-        continue-on-error: true
-
       - name: Send Telegram Notification
         if: env.TELEGRAM_BOT_TOKEN != ''
         env:
@@ -58,9 +50,13 @@ jobs:
             STATUS_TEXT="$STATUS"
           fi
           
+          # Build inline keyboard buttons
+          KEYBOARD='{"inline_keyboard":[[{"text":"🔄 Пересобрать","callback_data":"rebuild"},{"text":"📦 Скачать APK","callback_data":"download"}],[{"text":"📊 Dashboard","callback_data":"dashboard"},{"text":"📖 Документация","callback_data":"docs"}]]}'
+          
           MESSAGE="<b>🤖 AI Phone App - $WORKFLOW</b>
 
 $EMOJI <b>Статус:</b> $STATUS_TEXT
+
 🔗 <a href=\"$URL\">Открыть в GitHub</a>
 
 📅 $(date '+%d.%m.%Y %H:%M')"
@@ -69,7 +65,8 @@ $EMOJI <b>Статус:</b> $STATUS_TEXT
             -d "chat_id=$TELEGRAM_CHAT_ID" \
             -d "text=$MESSAGE" \
             -d "parse_mode=HTML" \
-            -d "disable_web_page_preview=false"
+            -d "reply_markup=$KEYBOARD" \
+            -d "disable_web_page_preview=true"
 
   notify-push:
     name: Notify Push
@@ -86,54 +83,91 @@ $EMOJI <b>Статус:</b> $STATUS_TEXT
           AUTHOR=$(git log -1 --pretty=format:"%an")
           BRANCH="${{ github.ref_name }}"
           
+          KEYBOARD='{"inline_keyboard":[[{"text":"🔄 Actions","url":"https://github.com/bitplugg/ai-phone-app/actions"},{"text":"📦 APK","url":"https://github.com/bitplugg/ai-phone-app/releases"},{"text":"📖 Сайт","url":"https://bitplugg.github.io/ai-phone-app/"}]]}'
+          
           MESSAGE="<b>📝 Новый Push в AI Phone App</b>
 
 🌿 <b>Ветка:</b> $BRANCH
 👤 <b>Автор:</b> $AUTHOR
 📝 <b>Коммит:</b> $COMMIT_MSG
-🔗 <a href=\"https://github.com/bitplugg/ai-phone-app/actions\">Открыть Actions</a>
 
 📅 $(date '+%d.%m.%Y %H:%M')"
           
           curl -s -X POST "https://api.telegram.org/bot$TELEGRAM_BOT_TOKEN/sendMessage" \
             -d "chat_id=$TELEGRAM_CHAT_ID" \
             -d "text=$MESSAGE" \
-            -d "parse_mode=HTML"
+            -d "parse_mode=HTML" \
+            -d "reply_markup=$KEYBOARD"
+
+  release-notify:
+    name: Notify Release
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/v')
+    steps:
+      - name: Get release info
+        id: release
+        run: |
+          VERSION="${{ github.ref_name }}"
+          echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
+
+      - name: Send Release Notification
+        if: env.TELEGRAM_BOT_TOKEN != ''
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: |
+          VERSION="${{ steps.release.outputs.VERSION }}"
+          
+          KEYBOARD='{"inline_keyboard":[[{"text":"📥 Скачать Debug APK","url":"https://github.com/bitplugg/ai-phone-app/releases/download/$VERSION/AI-Phone-App-debug-$VERSION.apk"},{"text":"📦 Все файлы","url":"https://github.com/bitplugg/ai-phone-app/releases/tag/$VERSION"}],[{"text":"🌐 Сайт","url":"https://bitplugg.github.io/ai-phone-app/"},{"text":"🐙 GitHub","url":"https://github.com/bitplugg/ai-phone-app"},{"text":"📖 Документация","url":"https://bitplugg.github.io/ai-phone-app/"}]]}'
+          
+          MESSAGE="🤖 <b>AI Phone App - НОВЫЙ РЕЛИЗ!</b>
+
+🎉 <b>Версия:</b> $VERSION
+
+✅ <b>Сборка успешна!</b>
+
+<i>Скачай APK и протестируй новые функции!</i>
+
+📅 $(date '+%d.%m.%Y %H:%M')"
+          
+          curl -s -X POST "https://api.telegram.org/bot$TELEGRAM_BOT_TOKEN/sendMessage" \
+            -d "chat_id=$TELEGRAM_CHAT_ID" \
+            -d "text=$MESSAGE" \
+            -d "parse_mode=HTML" \
+            -d "reply_markup=$KEYBOARD" \
+            -d "disable_web_page_preview=true"
 
   manual-message:
     name: Send Manual Message
     runs-on: ubuntu-latest
     if: github.event_name == 'workflow_dispatch' && inputs.message != ''
     steps:
-      - name: Send Message
+      - name: Send Message with Keyboard
         if: env.TELEGRAM_BOT_TOKEN != ''
         env:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
-          MSG: ${{ inputs.message }}
         run: |
-          MESSAGE="$MSG"
+          KEYBOARD='{"inline_keyboard":[[{"text":"🔄 Пересобрать","callback_data":"rebuild"},{"text":"📊 Dashboard","callback_data":"dashboard"}],[{"text":"📖 Сайт","url":"https://bitplugg.github.io/ai-phone-app/"},{"text":"📦 Releases","url":"https://github.com/bitplugg/ai-phone-app/releases"}]]}'
           
           curl -s -X POST "https://api.telegram.org/bot$TELEGRAM_BOT_TOKEN/sendMessage" \
             -d "chat_id=$TELEGRAM_CHAT_ID" \
-            -d "text=$MESSAGE" \
-            -d "parse_mode=HTML"
+            -d "text=${{ inputs.message }}" \
+            -d "parse_mode=HTML" \
+            -d "reply_markup=$KEYBOARD"
 
-  build-status:
-    name: Get Build Status
+  dashboard:
+    name: Send Dashboard
     runs-on: ubuntu-latest
     steps:
       - name: Get latest builds
         id: builds
         run: |
-          # Get last 5 workflow runs
           echo "runs<<EOF" >> $GITHUB_OUTPUT
-          echo "| Workflow | Status | Time |" >> $GITHUB_OUTPUT
-          echo "|----------|--------|------|" >> $GITHUB_OUTPUT
           
-          for wf in "Build and Release" "Lint & Code Quality" "Tests" "Security Scan"; do
-            STATUS=$(gh run list --repo bitplugg/ai-phone-app --workflow "$wf" --limit 1 --json conclusion --jq '.[0].conclusion')
-            TIME=$(gh run list --repo bitplugg/ai-phone-app --workflow "$wf" --limit 1 --json updatedAt --jq -r '.[0].updatedAt' | cut -d'T' -f1)
+          for wf in "Build and Release" "Lint & Code Quality" "Tests" "Security Scan" "Release"; do
+            STATUS=$(gh run list --repo bitplugg/ai-phone-app --workflow "$wf" --limit 1 --json conclusion --jq '.[0].conclusion' 2>/dev/null || echo "unknown")
+            TIME=$(gh run list --repo bitplugg/ai-phone-app --workflow "$wf" --limit 1 --json updatedAt --jq -r '.[0].updatedAt' 2>/dev/null | cut -d'T' -f1 || echo "-")
             
             if [ "$STATUS" == "success" ]; then
               EMOJI="✅"
@@ -145,7 +179,7 @@ $EMOJI <b>Статус:</b> $STATUS_TEXT
               EMOJI="⚪"
             fi
             
-            echo "| $wf | $EMOJI $STATUS | $TIME |" >> $GITHUB_OUTPUT
+            echo "$wf|$EMOJI $STATUS|$TIME" >> $GITHUB_OUTPUT
           done
           
           echo "EOF" >> $GITHUB_OUTPUT
@@ -156,15 +190,26 @@ $EMOJI <b>Статус:</b> $STATUS_TEXT
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
         run: |
+          RUNS="${{ steps.builds.outputs.runs }}"
+          
+          FORMATTED="| Workflow | Status | Time |
+|----------|--------|------|
+| Build and Release | $(echo "$RUNS" | grep "Build and Release" | cut -d'|' -f2) | $(echo "$RUNS" | grep "Build and Release" | cut -d'|' -f3) |
+| Lint | $(echo "$RUNS" | grep "Lint" | cut -d'|' -f2) | $(echo "$RUNS" | grep "Lint" | cut -d'|' -f3) |
+| Tests | $(echo "$RUNS" | grep "Tests" | cut -d'|' -f2) | $(echo "$RUNS" | grep "Tests" | cut -d'|' -f3) |
+| Security | $(echo "$RUNS" | grep "Security" | cut -d'|' -f2) | $(echo "$RUNS" | grep "Security" | cut -d'|' -f3) |
+| Release | $(echo "$RUNS" | grep "Release" | cut -d'|' -f2) | $(echo "$RUNS" | grep "Release" | cut -d'|' -f3) |"
+          
+          KEYBOARD='{"inline_keyboard":[[{"text":"🔄 Пересобрать","callback_data":"rebuild"},{"text":"📥 APK","url":"https://github.com/bitplugg/ai-phone-app/releases"}],[{"text":"📖 Сайт","url":"https://bitplugg.github.io/ai-phone-app/"},{"text":"🐙 GitHub","url":"https://github.com/bitplugg/ai-phone-app"}]]}'
+          
           MESSAGE="<b>📊 AI Phone App - Build Dashboard</b>
 
-${{ steps.builds.outputs.runs }}
+$FORMATTED
 
 <b>📱 Quick Links:</b>
-🔗 <a href=\"https://github.com/bitplugg/ai-phone-app/releases\">Releases</a>
-📦 <a href=\"https://github.com/bitplugg/ai-phone-app/actions\">Actions</a>
-🐛 <a href=\"https://github.com/bitplugg/ai-phone-app/issues\">Issues</a>
-📖 <a href=\"https://bitplugg.github.io/ai-phone-app/\">Website</a>
+• <a href=\"https://github.com/bitplugg/ai-phone-app/releases\">Releases</a>
+• <a href=\"https://github.com/bitplugg/ai-phone-app/actions\">Actions</a>
+• <a href=\"https://bitplugg.github.io/ai-phone-app/\">Website</a>
 
 <i>Updated: $(date '+%d.%m.%Y %H:%M')</i>"
           
@@ -172,4 +217,44 @@ ${{ steps.builds.outputs.runs }}
             -d "chat_id=$TELEGRAM_CHAT_ID" \
             -d "text=$MESSAGE" \
             -d "parse_mode=HTML" \
-            -d "disable_web_page_preview=false"
+            -d "reply_markup=$KEYBOARD" \
+            -d "disable_web_page_preview=true"
+
+  welcome:
+    name: Welcome Message
+    runs-on: ubuntu-latest
+    if: false
+    steps:
+      - name: Send Welcome
+        if: env.TELEGRAM_BOT_TOKEN != ''
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: |
+          KEYBOARD='{"inline_keyboard":[[{"text":"📥 Скачать APK","url":"https://github.com/bitplugg/ai-phone-app/releases/latest"},{"text":"📖 Документация","url":"https://bitplugg.github.io/ai-phone-app/"}],[{"text":"🐙 GitHub","url":"https://github.com/bitplugg/ai-phone-app"},{"text":"🐛 Issues","url":"https://github.com/bitplugg/ai-phone-app/issues"}]]}'
+          
+          MESSAGE="<b>👋 Добро пожаловать в AI Phone App!</b>
+
+<b>🤖 Твой AI ассистент для Android</b>
+
+<b>📦 Возможности:</b>
+• 🏠 Локальный AI (Ollama)
+• ☁️ Облачный AI (GPT/DeepSeek)
+• 🎨 Material You
+• 🎤 Голосовой ввод
+• 🔊 TTS
+• 📝 85+ настроек
+
+<b>🚀 Быстрый старт:</b>
+1. Скачай APK
+2. Установи на телефон
+3. Настрой Ollama или API ключ
+
+<b>📱 Ссылки:</b>"
+          
+          curl -s -X POST "https://api.telegram.org/bot$TELEGRAM_BOT_TOKEN/sendMessage" \
+            -d "chat_id=$TELEGRAM_CHAT_ID" \
+            -d "text=$MESSAGE" \
+            -d "parse_mode=HTML" \
+            -d "reply_markup=$KEYBOARD" \
+            -d "disable_web_page_preview=true"
