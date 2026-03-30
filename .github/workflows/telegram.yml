@@ -1,0 +1,80 @@
+name: Telegram Bot
+
+on:
+  workflow_dispatch:
+    inputs:
+      message:
+        description: 'Message to send'
+        required: false
+        default: 'Test message from AI Phone App'
+  schedule:
+    - cron: '0 * * * *'  # Every hour
+
+permissions:
+  contents: read
+
+jobs:
+  send-notification:
+    name: Send Telegram Notification
+    runs-on: ubuntu-latest
+    steps:
+      - name: Send Telegram Message
+        if: env.TELEGRAM_BOT_TOKEN != ''
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: |
+          MESSAGE="${{ github.event.inputs.message || '🤖 AI Phone App - Build completed successfully!' }}"
+          
+          # Send message
+          curl -s -X POST "https://api.telegram.org/bot$TELEGRAM_BOT_TOKEN/sendMessage" \
+            -d "chat_id=$TELEGRAM_CHAT_ID" \
+            -d "text=$MESSAGE" \
+            -d "parse_mode=HTML"
+          
+          echo "Message sent: $MESSAGE"
+
+  build-status:
+    name: Send Build Status
+    runs-on: ubuntu-latest
+    if: github.event_name == 'workflow_run'
+    steps:
+      - name: Get Workflow Status
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: |
+          # Get latest workflow status
+          WORKFLOW_NAME="${{ github.event.workflow.name }}"
+          CONCLUSION="${{ github.event.workflow_run.conclusion }}"
+          
+          if [ "$CONCLUSION" == "success" ]; then
+            EMOJI="✅"
+          elif [ "$CONCLUSION" == "failure" ]; then
+            EMOJI="❌"
+          else
+            EMOJI="⚠️"
+          fi
+          
+          MESSAGE="$EMOJI $WORKFLOW_NAME: $CONCLUSION"
+          
+          curl -s -X POST "https://api.telegram.org/bot$TELEGRAM_BOT_TOKEN/sendMessage" \
+            -d "chat_id=$TELEGRAM_CHAT_ID" \
+            -d "text=$MESSAGE"
+
+  daily-reminder:
+    name: Daily Reminder
+    runs-on: ubuntu-latest
+    if: false  # Enable if needed
+    steps:
+      - name: Send Daily Message
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: |
+          DATE=$(date '+%Y-%m-%d %H:%M')
+          MESSAGE="📱 AI Phone App - Daily check at $DATE"
+          
+          curl -s -X POST "https://api.telegram.org/bot$TELEGRAM_BOT_TOKEN/sendMessage" \
+            -d "chat_id=$TELEGRAM_CHAT_ID" \
+            -d "text=$MESSAGE"
